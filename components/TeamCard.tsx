@@ -13,6 +13,8 @@ interface TeamCardProps {
 export const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const kitImage = team.id === 'franca' ? '/kits/franca.jpg' : `/kits/${team.id}.png`;
+
   return (
     <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:border-fute-purpleBright/60 hover:shadow-2xl group relative overflow-hidden">
       {/* Background Accent Glow */}
@@ -49,17 +51,24 @@ export const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
 
           <Link
             href={`/uniforme?team=${team.id}`}
-            className="p-2.5 rounded-xl bg-fute-purple/20 hover:bg-fute-purpleBright/40 text-fute-purpleLight hover:text-white border border-fute-purpleBright/30 transition-all duration-200 shadow-md"
+            className="p-2.5 rounded-xl bg-fute-purple/20 hover:bg-fute-purpleBright/40 text-fute-purpleLight hover:text-white border border-fute-purpleBright/30 transition-all duration-200 shadow-md shrink-0"
             title={`Pedir uniforme do ${team.name}`}
           >
             <Shirt className="w-4 h-4" />
           </Link>
         </div>
 
-        {/* Kit Description pill */}
-        <p className="text-xs text-purple-200/80 bg-fute-darkBg/80 p-2.5 rounded-xl border border-fute-border/50 mb-4">
-          {team.kitDescription}
-        </p>
+        {/* 3D Kit Image Thumbnail + Description */}
+        <div className="flex items-center gap-3 bg-fute-darkBg/80 p-3 rounded-xl border border-fute-border/50 mb-4">
+          <img
+            src={kitImage}
+            alt={`Uniforme Kçula ${team.name}`}
+            className="w-16 h-16 object-contain rounded-lg shrink-0 border border-fute-border/40 bg-black/40 p-1"
+          />
+          <p className="text-xs text-purple-200/80 leading-snug">
+            {team.kitDescription}
+          </p>
+        </div>
 
         {/* Players List Preview */}
         <div className="space-y-1.5 overflow-hidden">

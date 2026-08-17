@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { TeamId } from '@/lib/types';
-import { RefreshCw } from 'lucide-react';
+import { Sparkles, ShieldCheck } from 'lucide-react';
 
 interface JerseyPreviewProps {
   teamId: TeamId;
-  jerseyName: string;
+  name?: string;
+  jerseyName?: string;
   number: number | string;
   size?: string;
   onTeamChange?: (teamId: TeamId) => void;
@@ -14,368 +15,141 @@ interface JerseyPreviewProps {
 
 export const JerseyPreview: React.FC<JerseyPreviewProps> = ({
   teamId,
+  name,
   jerseyName,
   number,
-  size = 'M',
+  size = 'G',
   onTeamChange,
 }) => {
-  const [viewMode, setViewMode] = useState<'back' | 'front'>('back');
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
 
-  const displayName = (jerseyName || 'SEU NOME').toUpperCase();
-  const displayNum = number !== undefined && number !== '' ? number : '10';
+  const displayName = jerseyName || name || 'SEU NOME';
+  const kitImage = teamId === 'franca' ? '/kits/franca.jpg' : `/kits/${teamId}.png`;
 
-  // Specific country configurations matching provided images
-  const kitConfigs = {
-    brasil: {
-      name: 'Brasil',
-      flagEmoji: '🇧🇷',
-      bodyColor: '#facc15', // Vibrant Yellow
-      trimColor: '#15803d', // Green
-      shortsColor: '#1d4ed8', // Blue
-      numberColor: '#15803d', // Green back number
-      nameColor: '#15803d',
-      pattern: 'brasil-jacquard',
-      badgeColor: '#1d4ed8',
-    },
-    argentina: {
-      name: 'Argentina',
-      flagEmoji: '🇦🇷',
-      bodyColor: '#ffffff',
-      trimColor: '#000000',
-      shortsColor: '#111827', // Black
-      numberColor: '#d97706', // Gold back number
-      nameColor: '#d97706',
-      pattern: 'stripes-sky',
-      badgeColor: '#38bdf8',
-    },
-    franca: {
-      name: 'França',
-      flagEmoji: '🇫🇷',
-      bodyColor: '#1d4ed8', // Royal Blue
-      trimColor: '#dc2626', // Red trim
-      shortsColor: '#1d4ed8',
-      numberColor: '#ffffff', // White number
-      nameColor: '#ffffff',
-      pattern: 'solid-blue',
-      badgeColor: '#ffffff',
-    },
-    alemanha: {
-      name: 'Alemanha',
-      flagEmoji: '🇩🇪',
-      bodyColor: '#ffffff', // White
-      trimColor: '#000000',
-      shortsColor: '#111827', // Black
-      numberColor: '#000000', // Black number
-      nameColor: '#000000',
-      pattern: 'chevron-flag',
-      badgeColor: '#000000',
-    },
-  }[teamId];
+  const teamColors: Record<TeamId, { primary: string; numberColor: string; nameColor: string }> = {
+    brasil: { primary: '#eab308', numberColor: '#16a34a', nameColor: '#16a34a' },
+    argentina: { primary: '#38bdf8', numberColor: '#d97706', nameColor: '#0284c7' },
+    alemanha: { primary: '#ffffff', numberColor: '#18181b', nameColor: '#18181b' },
+    franca: { primary: '#2563eb', numberColor: '#ffffff', nameColor: '#ffffff' },
+  };
+
+  const colors = teamColors[teamId] || teamColors.brasil;
 
   return (
-    <div className="relative flex flex-col items-center justify-center p-4 bg-gradient-to-b from-fute-card to-[#120822] border border-fute-border/80 rounded-2xl shadow-2xl overflow-hidden group">
-      {/* Glow Effects */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 bg-fute-purple/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-fute-purpleBright/20 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Top Header / View Toggle */}
-      <div className="w-full flex items-center justify-between gap-2 mb-3 z-10">
+    <div className="bg-fute-card border border-fute-border/80 rounded-3xl p-5 shadow-2xl space-y-4 animate-fadeIn">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between border-b border-fute-border/60 pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{kitConfigs.flagEmoji}</span>
-          <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">{kitConfigs.name}</h4>
-            <span className="text-[10px] text-fute-purpleLight font-medium">Kit Oficial 2024</span>
+          <Sparkles className="w-5 h-5 text-fute-gold" />
+          <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
+            Kit Oficial Kçula Sports ({teamId.toUpperCase()})
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-1 bg-fute-darkBg p-1 rounded-xl border border-fute-border">
+          <button
+            type="button"
+            onClick={() => setViewMode('3d')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all ${
+              viewMode === '3d'
+                ? 'bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white shadow'
+                : 'text-purple-300/70 hover:text-white'
+            }`}
+          >
+            Modelo 3D Kçula
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('2d')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all ${
+              viewMode === '2d'
+                ? 'bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white shadow'
+                : 'text-purple-300/70 hover:text-white'
+            }`}
+          >
+            Simulador 2D
+          </button>
+        </div>
+      </div>
+
+      {/* Main Display Box */}
+      {viewMode === '3d' ? (
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 via-fute-darkBg to-black border border-fute-purpleBright/40 p-4 text-center group">
+          {/* Badge Sponsor Overlay */}
+          <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-purple-500/40 text-[10px] font-bold text-amber-300 flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Kçula Sports Oficial</span>
+          </div>
+
+          <div className="absolute top-3 right-3 z-10 bg-fute-purple/40 backdrop-blur-md px-2.5 py-1 rounded-lg border border-fute-purpleLight/40 text-[10px] font-mono font-extrabold text-white">
+            Tam: {size}
+          </div>
+
+          {/* 3D Kit Image */}
+          <div className="relative mx-auto max-w-md my-2 flex items-center justify-center min-h-[320px]">
+            <img
+              src={kitImage}
+              alt={`Uniforme Oficial Kçula Sports ${teamId}`}
+              className="w-full h-auto object-contain rounded-xl drop-shadow-2xl transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+
+            {/* Live Name & Number Badge Overlay */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-fute-gold/60 shadow-2xl flex items-center gap-3">
+              <span className="font-mono text-xl sm:text-2xl font-black text-fute-gold">
+                #{number || '10'}
+              </span>
+              <div className="text-left border-l border-fute-gold/40 pl-3">
+                <span className="text-[9px] uppercase font-bold text-fute-purpleLight block">Nome Personalizado</span>
+                <strong className="text-xs sm:text-sm font-extrabold text-white uppercase tracking-wider block">
+                  {displayName}
+                </strong>
+              </div>
+            </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setViewMode(viewMode === 'back' ? 'front' : 'back')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-fute-border/60 hover:bg-fute-purple/40 text-xs font-semibold text-purple-200 rounded-lg border border-purple-500/30 transition-all duration-200 shadow-sm"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Ver {viewMode === 'back' ? 'FRENTE' : 'COSTAS'}</span>
-        </button>
-      </div>
-
-      {/* Main SVG Jersey Renderer */}
-      <div className="relative w-full max-w-[320px] aspect-[4/5] flex items-center justify-center my-2 transition-transform duration-300 transform group-hover:scale-[1.02]">
-        <svg
-          viewBox="0 0 400 480"
-          className="w-full h-full drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)]"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            {/* Argentina Sky Blue Stripes Pattern */}
-            <pattern id="skyStripes" width="60" height="400" patternUnits="userSpaceOnUse">
-              <rect x="0" y="0" width="30" height="400" fill="#38bdf8" />
-              <rect x="30" y="0" width="30" height="400" fill="#ffffff" />
-            </pattern>
-
-            {/* Germany Chevron Pattern */}
-            <linearGradient id="germanyFlag" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#000000" />
-              <stop offset="50%" stopColor="#dc2626" />
-              <stop offset="100%" stopColor="#eab308" />
-            </linearGradient>
-
-            {/* 3D Fabric Shader */}
-            <linearGradient id="fabricShade" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
-              <stop offset="50%" stopColor="#000000" stopOpacity="0" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0.4" />
-            </linearGradient>
-          </defs>
-
-          {/* ---------------- SHORTS ---------------- */}
-          <g id="shorts">
-            {/* Left Leg */}
-            <path
-              d="M140 330 L110 430 H195 L200 350 Z"
-              fill={kitConfigs.shortsColor}
-              stroke="#000"
-              strokeWidth="2"
-            />
-            {/* Right Leg */}
-            <path
-              d="M260 330 L290 430 H205 L200 350 Z"
-              fill={kitConfigs.shortsColor}
-              stroke="#000"
-              strokeWidth="2"
-            />
-            {/* Waistband */}
-            <rect x="135" y="325" width="130" height="15" rx="3" fill="#1e293b" />
-
-            {/* Shorts Number (Left Leg) */}
-            <text
-              x="145"
-              y="410"
-              fill="#ffffff"
-              fontSize="24"
-              fontWeight="900"
-              fontFamily="monospace, sans-serif"
-            >
-              {displayNum}
-            </text>
-          </g>
-
-          {/* ---------------- JERSEY BODY ---------------- */}
-          <g id="jersey-body">
-            {/* Main Torso Base */}
-            {teamId === 'argentina' ? (
+      ) : (
+        /* 2D Vector Simulator */
+        <div className="relative bg-gradient-to-b from-fute-darkBg to-fute-sidebar rounded-2xl p-6 border border-fute-border/60 flex flex-col items-center justify-center min-h-[320px]">
+          <div className="relative w-56 h-64 flex flex-col items-center justify-center">
+            {/* SVG Jersey Outline */}
+            <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-2xl">
+              {/* Main Body */}
               <path
-                d="M110 90 L140 50 H260 L290 90 L275 330 H125 Z"
-                fill="url(#skyStripes)"
-                stroke="#111"
-                strokeWidth="2"
+                d="M 50,40 L 75,20 L 125,20 L 150,40 L 190,65 L 170,105 L 150,90 L 150,220 L 50,220 L 50,90 L 30,105 L 10,65 Z"
+                fill={colors.primary}
+                stroke="#18181b"
+                strokeWidth="3"
               />
-            ) : (
-              <path
-                d="M110 90 L140 50 H260 L290 90 L275 330 H125 Z"
-                fill={kitConfigs.bodyColor}
-                stroke="#111"
-                strokeWidth="2"
-              />
-            )}
 
-            {/* Left Sleeve */}
-            <path
-              d="M140 50 L75 110 L105 160 L128 120 Z"
-              fill={teamId === 'argentina' ? '#ffffff' : kitConfigs.bodyColor}
-              stroke="#111"
-              strokeWidth="2"
-            />
-            {/* Left Sleeve Trim */}
-            <path
-              d="M75 110 L105 160 L112 150 L85 105 Z"
-              fill={kitConfigs.trimColor}
-            />
+              {/* Collar */}
+              <path d="M 75,20 Q 100,45 125,20" fill="none" stroke="#ffffff" strokeWidth="4" />
 
-            {/* Right Sleeve */}
-            <path
-              d="M260 50 L325 110 L295 160 L272 120 Z"
-              fill={teamId === 'argentina' ? '#ffffff' : kitConfigs.bodyColor}
-              stroke="#111"
-              strokeWidth="2"
-            />
-            {/* Right Sleeve Trim */}
-            <path
-              d="M325 110 L295 160 L288 150 L315 105 Z"
-              fill={kitConfigs.trimColor}
-            />
+              {/* Logo Emblem */}
+              <image href="/logo.png" x="120" y="55" width="22" height="22" />
+            </svg>
 
-            {/* ---------------- SPECIAL CHESTRY PATTERNS ---------------- */}
-            {/* Germany Chevron Design */}
-            {teamId === 'alemanha' && (
-              <g id="germany-chevron">
-                {/* Chevron Black/Red/Yellow Triangles */}
-                <polygon points="120,130 200,190 280,130 280,165 200,225 120,165" fill="#000000" />
-                <polygon points="120,150 200,210 280,150 280,175 200,235 120,175" fill="#dc2626" />
-                <polygon points="120,165 200,225 280,165 280,185 200,245 120,185" fill="#eab308" />
-              </g>
-            )}
-
-            {/* France Tricolor Collar */}
-            {teamId === 'franca' && (
-              <g id="france-collar">
-                <polygon points="175,50 200,90 225,50" fill="#ffffff" />
-                <polygon points="182,50 200,80 218,50" fill="#dc2626" />
-              </g>
-            )}
-
-            {/* Brasil Green Side Panels */}
-            {teamId === 'brasil' && (
-              <g id="brasil-panels">
-                <path d="M125 180 Q135 240 125 330 H135 Q145 240 135 180 Z" fill="#15803d" />
-                <path d="M275 180 Q265 240 275 330 H265 Q255 240 265 180 Z" fill="#15803d" />
-              </g>
-            )}
-
-            {/* Collar Base */}
-            <path
-              d="M170 50 Q200 90 230 50"
-              fill="none"
-              stroke={kitConfigs.trimColor}
-              strokeWidth="8"
-            />
-
-            {/* Fabric Shade Layer */}
-            <path
-              d="M110 90 L140 50 H260 L290 90 L275 330 H125 Z"
-              fill="url(#fabricShade)"
-            />
-          </g>
-
-          {/* ---------------- VIEW MODE: FRONT ---------------- */}
-          {viewMode === 'front' && (
-            <g id="front-details">
-              {/* Event Sponsor Top Header */}
-              <text x="200" y="75" textAnchor="middle" fill="#6b7280" fontSize="11" fontWeight="bold">
-                Fute do Bem 2024
-              </text>
-
-              {/* Fute do Bem Crest (Right Chest) */}
-              <g transform="translate(155, 115) scale(0.35)">
-                <path d="M50 4 L92 20 V62 C92 90 70 110 50 116 C30 110 8 90 8 62 V20 L50 4 Z" fill="#3b0764" stroke="#a855f7" strokeWidth="4" />
-                <path d="M50 82 C50 82 24 64 24 45 C24 35 32 28 41 28 C46 28 49 31 50 33 C51 31 54 28 59 28 C68 28 76 35 76 45 C76 64 50 82 50 82 Z" fill="#c084fc" />
-              </g>
-
-              {/* Country Badge (Left Chest) */}
-              <g transform="translate(225, 115) scale(0.35)">
-                {teamId === 'brasil' && (
-                  <g>
-                    <rect x="10" y="10" width="80" height="100" rx="10" fill="#002776" stroke="#ffdf00" strokeWidth="4" />
-                    <polygon points="50,20 80,60 50,100 20,60" fill="#009c3b" />
-                    <circle cx="50" cy="60" r="18" fill="#002776" />
-                  </g>
-                )}
-                {teamId === 'argentina' && (
-                  <g>
-                    <rect x="10" y="10" width="80" height="100" rx="10" fill="#ffffff" stroke="#74acdf" strokeWidth="4" />
-                    <circle cx="50" cy="60" r="22" fill="#f6b40e" />
-                  </g>
-                )}
-                {teamId === 'franca' && (
-                  <g>
-                    <rect x="10" y="10" width="80" height="100" rx="10" fill="#002395" stroke="#ffffff" strokeWidth="4" />
-                    {/* Rooster Symbol */}
-                    <path d="M40 70 Q50 30 70 50 T50 80 Z" fill="#ed2939" />
-                  </g>
-                )}
-                {teamId === 'alemanha' && (
-                  <g>
-                    <circle cx="50" cy="60" r="40" fill="#ffffff" stroke="#000000" strokeWidth="5" />
-                    {/* Eagle Symbol */}
-                    <path d="M35 50 H65 V70 H35 Z" fill="#000000" />
-                  </g>
-                )}
-              </g>
-
-              {/* Front Small Number */}
-              <text
-                x="200"
-                y="210"
-                textAnchor="middle"
-                fill={kitConfigs.numberColor}
-                fontSize="45"
-                fontWeight="900"
-                fontFamily="Impact, sans-serif"
-                stroke={teamId === 'alemanha' ? '#ffffff' : 'none'}
-                strokeWidth="1"
-              >
-                {displayNum}
-              </text>
-            </g>
-          )}
-
-          {/* ---------------- VIEW MODE: BACK ---------------- */}
-          {viewMode === 'back' && (
-            <g id="back-details">
-              {/* Back Top Sponsor Tag */}
-              <text x="200" y="72" textAnchor="middle" fill="#4b5563" fontSize="10" fontWeight="bold" letterSpacing="1">
-                Fute do Bem
-              </text>
-
-              {/* PLAYER NAME ON JERSEY */}
-              <text
-                x="200"
-                y="130"
-                textAnchor="middle"
-                fill={kitConfigs.nameColor}
-                fontSize="22"
-                fontWeight="900"
-                letterSpacing="3"
-                fontFamily="Impact, sans-serif"
+            {/* Back Jersey Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pt-8">
+              <span
+                className="font-black tracking-widest text-xs uppercase drop-shadow-md"
+                style={{ color: colors.nameColor }}
               >
                 {displayName}
-              </text>
-
-              {/* PLAYER NUMBER ON JERSEY */}
-              <text
-                x="200"
-                y="240"
-                textAnchor="middle"
-                fill={kitConfigs.numberColor}
-                fontSize="110"
-                fontWeight="900"
-                fontFamily="Impact, sans-serif"
-                stroke={teamId === 'alemanha' ? '#ffffff' : 'none'}
-                strokeWidth="2"
+              </span>
+              <span
+                className="font-mono text-5xl font-black drop-shadow-lg mt-1"
+                style={{ color: colors.numberColor }}
               >
-                {displayNum}
-              </text>
-            </g>
-          )}
-        </svg>
-      </div>
-
-      {/* Mini Team Switcher Bar */}
-      <div className="w-full flex items-center justify-between gap-1 mt-2 pt-2 border-t border-fute-border/50">
-        <span className="text-[11px] text-fute-purpleLight/70 font-medium">Tamanho: <strong className="text-white">{size}</strong></span>
-
-        <div className="flex items-center gap-1.5">
-          {(['brasil', 'argentina', 'franca', 'alemanha'] as TeamId[]).map((tId) => {
-            const emojis = { brasil: '🇧🇷', argentina: '🇦🇷', franca: '🇫🇷', alemanha: '🇩🇪' };
-            const isActive = tId === teamId;
-            return (
-              <button
-                key={tId}
-                type="button"
-                onClick={() => onTeamChange?.(tId)}
-                className={`p-1.5 rounded-lg text-sm transition-all duration-200 ${
-                  isActive
-                    ? 'bg-fute-purpleBright/30 border border-fute-purpleLight scale-110 shadow-lg'
-                    : 'bg-fute-card/80 hover:bg-fute-border/50 opacity-60 hover:opacity-100'
-                }`}
-                title={`Ver uniforme do ${tId}`}
-              >
-                {emojis[tId]}
-              </button>
-            );
-          })}
+                {number || '10'}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      <p className="text-[11px] text-fute-purpleLight text-center italic">
+        * Kit impresso com tecido dry-fit profissional Kçula Sports e o escudo oficial Fute do Bem no peito.
+      </p>
     </div>
   );
 };
