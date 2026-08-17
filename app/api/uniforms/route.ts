@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const num = Number(number);
     const now = new Date().toISOString().split('T')[0];
 
     const currentOrders = await dbGetAllOrders();
@@ -37,12 +38,30 @@ export async function POST(request: Request) {
       (o) => (id && o.id === id) || (o.playerName.toLowerCase() === playerName.toLowerCase() && o.teamId === teamId)
     );
 
+    // UNIQUE NUMBER TRAVA PER TEAM CHECK
+    const duplicateNumberOrder = currentOrders.find(
+      (o) =>
+        o.teamId === teamId &&
+        o.number === num &&
+        o.id !== (existingOrder ? existingOrder.id : id) &&
+        o.playerName.toLowerCase() !== playerName.toLowerCase()
+    );
+
+    if (duplicateNumberOrder) {
+      return NextResponse.json(
+        {
+          error: `O número #${num} já foi escolhido por ${duplicateNumberOrder.playerName} na Seleção ${teamId.toUpperCase()}. Escolha outro número.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const orderToSave: UniformOrder = {
       id: existingOrder ? existingOrder.id : (id || 'ord-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5)),
       teamId,
       playerName,
       jerseyName: jerseyName.toUpperCase(),
-      number: Number(number),
+      number: num,
       size,
       position: position || (existingOrder ? existingOrder.position : 'Atacante'),
       phone: phone || '',

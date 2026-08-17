@@ -6,7 +6,7 @@ import { TEAMS } from '@/lib/data';
 import { JerseyPreview } from './JerseyPreview';
 import { saveOrUpdateOrder, getMyPlayerOrder } from '@/lib/storage';
 import confetti from 'canvas-confetti';
-import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, Lock, ChevronDown, Edit3 } from 'lucide-react';
+import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, Lock, ChevronDown, Edit3, AlertTriangle } from 'lucide-react';
 
 interface UniformFormProps {
   initialTeamId?: TeamId;
@@ -33,11 +33,28 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [successOrder, setSuccessOrder] = useState<UniformOrder | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [allSubmittedOrders, setAllSubmittedOrders] = useState<UniformOrder[]>([]);
 
   const team = TEAMS[teamId];
 
-  // Load existing order on mount
+  // Fetch all orders from central API to lock taken numbers
+  const fetchAllOrders = async () => {
+    try {
+      const res = await fetch('/api/uniforms', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.orders && Array.isArray(data.orders)) {
+          setAllSubmittedOrders(data.orders);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch server orders for number lock:', err);
+    }
+  };
+
+  // Load existing order on mount & fetch server orders
   useEffect(() => {
+    fetchAllOrders();
     const saved = getMyPlayerOrder();
     if (saved) {
       setExistingOrder(saved);
@@ -51,6 +68,17 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       setPhone(saved.phone || '');
     }
   }, []);
+
+  // Map of taken numbers in current team (Number -> Player Name)
+  const takenNumbersMap = new Map<number, string>();
+  allSubmittedOrders
+    .filter((o) => o.teamId === teamId && o.id !== orderId && o.playerName.toLowerCase() !== playerName.toLowerCase())
+    .forEach((o) => {
+      takenNumbersMap.set(o.number, o.playerName);
+    });
+
+  const isNumberTaken = takenNumbersMap.has(Number(number));
+  const takenByPlayer = takenNumbersMap.get(Number(number));
 
   // When team changes, pre-select player if not editing existing order
   useEffect(() => {
@@ -92,6 +120,14 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       return;
     }
 
+    // UNIQUE NUMBER LOCK CHECK FOR SAME TEAM
+    const num = Number(number);
+    if (takenNumbersMap.has(num)) {
+      const takenBy = takenNumbersMap.get(num);
+      setErrorMsg(`O número #${num} já foi escolhido por ${takenBy} na Seleção ${team.name}. Escolha outro número.`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -101,7 +137,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         teamId,
         playerName: playerName.trim(),
         jerseyName: jerseyName.trim().toUpperCase(),
-        number: Number(number),
+        number: num,
         size,
         position, // Fixed position from official list
         phone: phone.trim(),
@@ -113,6 +149,9 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newOrder),
       });
+
+      // Re-fetch all orders to refresh locks
+      await fetchAllOrders();
 
       // Trigger Celebration Confetti!
       try {
@@ -154,7 +193,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               Portal do Jogador - Pedido de Kit
             </h2>
             <p className="text-[11px] sm:text-xs text-fute-purpleLight">
-              Selecione seu nome da lista oficial, personalize sua camiseta e edite quando precisar.
+              Selecione seu nome da lista oficial, personalize sua camiseta e escolha seu número exclusivo.
             </p>
           </div>
         </div>
@@ -196,8 +235,8 @@ export const UniformForm: React.FC<UniformFormProps> = ({
                 <strong className="text-fute-purpleBright font-mono text-sm">{existingOrder.jerseyName}</strong>
               </div>
               <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
-                <span className="text-fute-purpleLight">Número Desejado:</span>
-                <strong className="text-white font-mono text-sm">#{existingOrder.number}</strong>
+                <span className="text-fute-purpleLight">Número Reservado:</span>
+                <strong className="text-emerald-400 font-mono text-sm">#{existingOrder.number} (Exclusivo)</strong>
               </div>
               <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
                 <span className="text-fute-purpleLight">Tamanho Escolhido:</span>
@@ -212,8 +251,9 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             {errorMsg && (
-              <div className="p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-xs text-red-200 font-semibold">
-                {errorMsg}
+              <div className="p-3 bg-red-950/90 border-2 border-red-500 rounded-xl text-xs text-red-200 font-bold flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                <span>{errorMsg}</span>
               </div>
             )}
 
@@ -319,13 +359,17 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               </div>
             </div>
 
-            {/* 4. Número Desejado & Tamanho */}
+            {/* 4. Número Desejado & Trava de Número Repetido */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5 text-fute-purpleBright" />
-                  <span>Número Desejado</span>
+                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Hash className="w-3.5 h-3.5 text-fute-purpleBright" />
+                    <span>Número Desejado</span>
+                  </span>
+                  <span className="text-[10px] text-amber-300 font-semibold">Sem repetição no time</span>
                 </label>
+
                 <input
                   type="number"
                   min="1"
@@ -333,9 +377,21 @@ export const UniformForm: React.FC<UniformFormProps> = ({
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
                   placeholder="Ex: 10"
-                  className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white font-mono text-sm focus:outline-none focus:border-fute-purpleBright transition-colors"
+                  className={`w-full px-3.5 py-2.5 bg-fute-darkBg border rounded-xl text-white font-mono text-sm focus:outline-none transition-colors ${
+                    isNumberTaken
+                      ? 'border-red-500 text-red-300 focus:border-red-400 ring-1 ring-red-500'
+                      : 'border-fute-border focus:border-fute-purpleBright'
+                  }`}
                   required
                 />
+
+                {/* Warning if number is taken by another player */}
+                {isNumberTaken && (
+                  <div className="mt-1.5 p-2 bg-red-950/90 border border-red-500/80 rounded-lg text-[11px] text-red-300 font-bold flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>O nº {number} já pertence a {takenByPlayer} no {team.name}. Escolha outro número.</span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -380,8 +436,8 @@ export const UniformForm: React.FC<UniformFormProps> = ({
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 sm:py-4 bg-gradient-to-r from-fute-purple via-fute-purpleBright to-purple-500 hover:from-purple-600 hover:to-fute-purple text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xl shadow-purple-950/60 uppercase tracking-wider flex items-center justify-center gap-2 transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              disabled={isSubmitting || isNumberTaken}
+              className="w-full py-3.5 sm:py-4 bg-gradient-to-r from-fute-purple via-fute-purpleBright to-purple-500 hover:from-purple-600 hover:to-fute-purple text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xl shadow-purple-950/60 uppercase tracking-wider flex items-center justify-center gap-2 transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isSubmitting ? 'SALVANDO SEU KIT...' : isEditing ? 'REENVIAR E ATUALIZAR MEU PEDIDO' : 'CONFIRMAR E SALVAR MEU KIT DE UNIFORME'}</span>
@@ -397,7 +453,6 @@ export const UniformForm: React.FC<UniformFormProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-fute-gold" />
             Pré-visualização do Uniforme
           </span>
-          <span className="text-[11px] text-fute-purpleLight">Renderização 2D ao vivo</span>
         </div>
 
         <JerseyPreview
