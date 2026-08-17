@@ -94,56 +94,8 @@ export const TEAMS: Record<string, Team> = {
   },
 };
 
-export const INITIAL_ORDERS: UniformOrder[] = [
-  {
-    id: 'ord-101',
-    teamId: 'brasil',
-    playerName: 'Renan',
-    jerseyName: 'RENAN',
-    number: 10,
-    size: 'G',
-    position: 'Meio-campo',
-    phone: '(11) 99999-1010',
-    createdAt: '2026-08-10',
-    status: 'Confirmado',
-  },
-  {
-    id: 'ord-102',
-    teamId: 'argentina',
-    playerName: 'Bruno M',
-    jerseyName: 'BRUNO M',
-    number: 10,
-    size: 'M',
-    position: 'Meio-campo',
-    phone: '(11) 98888-1010',
-    createdAt: '2026-08-11',
-    status: 'Em Confeccao',
-  },
-  {
-    id: 'ord-103',
-    teamId: 'alemanha',
-    playerName: 'Caio',
-    jerseyName: 'CAIO',
-    number: 10,
-    size: 'G',
-    position: 'Meio-campo',
-    phone: '(11) 97777-1010',
-    createdAt: '2026-08-12',
-    status: 'Confirmado',
-  },
-  {
-    id: 'ord-104',
-    teamId: 'franca',
-    playerName: 'Luis Jr',
-    jerseyName: 'LUIS JR',
-    number: 10,
-    size: 'M',
-    position: 'Meio-campo',
-    phone: '(11) 96666-0606',
-    createdAt: '2026-08-14',
-    status: 'Pendente',
-  },
-];
+// INITIAL_ORDERS is empty so only REAL player submissions appear
+export const INITIAL_ORDERS: UniformOrder[] = [];
 
 export const MATCHES: Match[] = [
   {

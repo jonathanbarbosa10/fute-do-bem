@@ -1,21 +1,19 @@
-import { UniformOrder, TeamId } from './types';
-import { INITIAL_ORDERS } from './data';
+import { UniformOrder } from './types';
 
-const STORAGE_KEY = 'fute_do_bem_uniform_orders_v2';
+const STORAGE_KEY = 'fute_do_bem_uniform_orders_v3';
 const PLAYER_ORDER_KEY = 'fute_do_bem_my_player_order_id';
 
 export function getStoredOrders(): UniformOrder[] {
-  if (typeof window === 'undefined') return INITIAL_ORDERS;
+  if (typeof window === 'undefined') return [];
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
-      return INITIAL_ORDERS;
+      return [];
     }
     return JSON.parse(data);
   } catch (err) {
     console.error('Failed to load stored orders:', err);
-    return INITIAL_ORDERS;
+    return [];
   }
 }
 
@@ -41,7 +39,6 @@ export function saveOrUpdateOrder(
   if (orderData.id) {
     existingIndex = currentOrders.findIndex((o) => o.id === orderData.id);
   } else {
-    // Check if player name already exists in current orders
     existingIndex = currentOrders.findIndex(
       (o) => o.playerName.toLowerCase() === orderData.playerName.toLowerCase() && o.teamId === orderData.teamId
     );
@@ -50,7 +47,6 @@ export function saveOrUpdateOrder(
   let finalOrder: UniformOrder;
 
   if (existingIndex >= 0) {
-    // Update existing player order
     finalOrder = {
       ...currentOrders[existingIndex],
       ...orderData,
@@ -59,7 +55,6 @@ export function saveOrUpdateOrder(
     };
     currentOrders[existingIndex] = finalOrder;
   } else {
-    // Create new order
     finalOrder = {
       ...orderData,
       id: 'ord-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
