@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { UniformOrder } from '@/lib/types';
 import { getStoredOrders, deleteOrder, updateOrderStatus } from '@/lib/storage';
-import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck, RefreshCw, FileSpreadsheet } from 'lucide-react';
 
 interface OrdersListProps {
   refreshTrigger?: number;
@@ -79,28 +79,31 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
     return matchesSearch && matchesTeam && matchesStatus;
   });
 
-  // Export to CSV for clothing manufacturer (Kçula Sports)
-  const exportToCSV = () => {
+  // Export directly to Excel / Google Sheets format (.csv with UTF-8 BOM)
+  const exportToExcelGoogleSheets = () => {
     if (!isAdmin) return;
-    const headers = ['ID', 'Time', 'Nome do Jogador', 'Nome na Camiseta', 'Numero', 'Tamanho', 'Posicao', 'Telefone', 'Status', 'Data'];
+    const headers = ['ID Pedido', 'Selecao', 'Nome Completo Jogador', 'Nome na Camiseta', 'Numero', 'Tamanho', 'Posicao', 'WhatsApp', 'Status', 'Data Cadastro'];
     const rows = filteredOrders.map((o) => [
       o.id,
       o.teamId.toUpperCase(),
-      `"${o.playerName}"`,
-      `"${o.jerseyName}"`,
+      `"${o.playerName.replace(/"/g, '""')}"`,
+      `"${o.jerseyName.replace(/"/g, '""')}"`,
       o.number,
       o.size,
       o.position,
-      `"${o.phone || ''}"`,
+      `"${(o.phone || '').replace(/"/g, '""')}"`,
       o.status,
       o.createdAt,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    // Add UTF-8 BOM (\uFEFF) so Excel and Google Sheets open special accents correctly
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `pedidos_uniformes_futedobem_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pedidos_uniformes_excel_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -147,7 +150,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           Pedidos Confirmados para Produção (Acesso Restrito)
         </h3>
         <p className="text-xs text-fute-purpleLight max-w-md mx-auto">
-          A lista completa de uniformes encomendados e exportação de relatórios para a confecção é de acesso exclusivo do **Organizador (Admin)**.
+          A lista completa de uniformes encomendados e exportação de relatórios para Excel / Google Sheets é de acesso exclusivo do **Organizador (Admin)**.
         </p>
         <span className="inline-block text-[11px] font-semibold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
           Jogadores podem cadastrar ou editar o seu próprio kit no formulário acima.
@@ -164,7 +167,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-amber-400" />
             <h3 className="text-lg font-black text-white uppercase tracking-wider">
-              Painel Admin - Banco de Dados dos Pedidos
+              Painel Admin - Pedidos para Produção (Excel / Google Sheets)
             </h3>
           </div>
           <p className="text-xs text-fute-purpleLight">
@@ -183,11 +186,11 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           </button>
 
           <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-105"
+            onClick={exportToExcelGoogleSheets}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white text-xs font-extrabold rounded-xl transition-all shadow-md hover:scale-105"
           >
-            <Download className="w-4 h-4 text-fute-gold" />
-            <span>Baixar Relatório (CSV / Kçula)</span>
+            <FileSpreadsheet className="w-4 h-4 text-white" />
+            <span>Baixar para Excel / Google Sheets</span>
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Shirt, Calendar, ShieldCheck, User, Sparkles } from 'lucide-react';
+import { Shirt, Calendar, ShieldCheck, User, Sparkles, UserCheck } from 'lucide-react';
 
 interface HeaderProps {
   title?: string;
@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleAdminAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'futedobem') {
+    if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'futedobem' || pinInput === 'renato') {
       setIsAdmin(true);
       localStorage.setItem('fute_admin_mode', 'true');
       window.dispatchEvent(new Event('storage'));
@@ -47,20 +47,24 @@ export const Header: React.FC<HeaderProps> = ({
       setPinInput('');
       setErrorMsg('');
     } else {
-      setErrorMsg('Senha do organizador incorreta. (Dica padrão: 1234)');
+      setErrorMsg('Senha do organizador incorreta.');
     }
   };
 
   return (
     <header className="sticky top-0 z-30 w-full bg-fute-darkBg/95 backdrop-blur-md border-b border-fute-border/60 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      {/* Title & Subtitle */}
+      {/* Title & Organizer Info */}
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-sm sm:text-lg font-extrabold text-white tracking-wide">
             {title}
           </h1>
           <span className="px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
             Society
+          </span>
+          <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fute-purple/30 border border-fute-purpleLight/40 text-[10px] sm:text-xs font-bold text-fute-gold shadow-sm">
+            <UserCheck className="w-3 h-3 text-fute-gold" />
+            Organizador: Renato Pitanga
           </span>
         </div>
         <p className="text-[11px] sm:text-xs text-fute-purpleLight font-medium">{subtitle}</p>
@@ -167,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
                     type="password"
                     value={pinInput}
                     onChange={(e) => setPinInput(e.target.value)}
-                    placeholder="Senha (Dica: 1234)"
+                    placeholder="Digite a Senha"
                     className="flex-1 px-3 py-2 bg-fute-darkBg border border-fute-border rounded-xl text-white font-mono text-xs focus:outline-none focus:border-fute-purpleBright"
                   />
                   <button
