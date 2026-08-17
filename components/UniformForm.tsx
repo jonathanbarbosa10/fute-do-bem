@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TeamId, UniformOrder } from '@/lib/types';
 import { TEAMS } from '@/lib/data';
 import { JerseyPreview } from './JerseyPreview';
@@ -17,6 +17,9 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   initialTeamId = 'brasil',
   onOrderCreated,
 }) => {
+  const [existingOrder, setExistingOrder] = useState<UniformOrder | null>(null);
+  const isLoadedRef = useRef(false);
+
   const [teamId, setTeamId] = useState<TeamId>(initialTeamId);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   
@@ -29,7 +32,6 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   const [phone, setPhone] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingOrder, setExistingOrder] = useState<UniformOrder | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [successOrder, setSuccessOrder] = useState<UniformOrder | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -57,6 +59,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
     fetchAllOrders();
     const saved = getMyPlayerOrder();
     if (saved) {
+      isLoadedRef.current = true;
       setExistingOrder(saved);
       setOrderId(saved.id);
       setTeamId(saved.teamId);
@@ -80,8 +83,12 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   const isNumberTaken = takenNumbersMap.has(Number(number));
   const takenByPlayer = takenNumbersMap.get(Number(number));
 
-  // When team changes, pre-select player if not editing existing order
+  // When team changes manually, pre-select first player of that team ONLY if no saved order is present
   useEffect(() => {
+    if (isLoadedRef.current && existingOrder && !isEditing) {
+      return; // Do not overwrite loaded saved order
+    }
+
     if (!isEditing && !existingOrder && team && team.players.length > 0) {
       const firstPlayer = team.players[0];
       setSelectedPlayerId(firstPlayer.id);
@@ -101,6 +108,19 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       setNumber(p.number);
       setPosition(p.position);
     }
+  };
+
+  const handleStartEditing = () => {
+    if (existingOrder) {
+      setTeamId(existingOrder.teamId);
+      setPlayerName(existingOrder.playerName);
+      setJerseyName(existingOrder.jerseyName);
+      setNumber(existingOrder.number);
+      setSize(existingOrder.size);
+      setPosition(existingOrder.position);
+      setPhone(existingOrder.phone || '');
+    }
+    setIsEditing(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,6 +188,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       setSuccessOrder(newOrder);
       setExistingOrder(newOrder);
       setIsEditing(false);
+      isLoadedRef.current = true;
 
       if (onOrderCreated) {
         onOrderCreated(newOrder);
@@ -179,6 +200,12 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  // Compute active preview props to guarantee 100% sync
+  const activePreviewTeamId = existingOrder && !isEditing ? existingOrder.teamId : teamId;
+  const activePreviewJerseyName = existingOrder && !isEditing ? existingOrder.jerseyName : jerseyName;
+  const activePreviewNumber = existingOrder && !isEditing ? existingOrder.number : number;
+  const activePreviewSize = existingOrder && !isEditing ? existingOrder.size : size;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
@@ -216,7 +243,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
 
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
+                onClick={handleStartEditing}
                 className="flex items-center justify-center gap-1.5 px-3 py-2 bg-fute-purple/40 hover:bg-fute-purpleBright text-white text-xs font-bold rounded-xl border border-fute-purpleLight/40 transition-colors shadow-md w-full sm:w-auto"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -456,10 +483,10 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         </div>
 
         <JerseyPreview
-          teamId={teamId}
-          jerseyName={jerseyName}
-          number={number}
-          size={size}
+          teamId={activePreviewTeamId}
+          jerseyName={activePreviewJerseyName}
+          number={activePreviewNumber}
+          size={activePreviewSize}
           onTeamChange={(t) => setTeamId(t)}
         />
       </div>
