@@ -13,7 +13,15 @@ interface TeamCardProps {
 export const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const kitImage = team.id === 'franca' ? '/kits/franca.jpg' : `/kits/${team.id}.png`;
+  const getKitImage = (id: string) => {
+    const normalized = (id || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (normalized.includes('franc') || normalized === 'franca') return '/kits/franca.jpg';
+    if (normalized.includes('arg') || normalized === 'argentina') return '/kits/argentina.png';
+    if (normalized.includes('alem') || normalized === 'alemanha') return '/kits/alemanha.png';
+    return '/kits/brasil.png';
+  };
+
+  const kitImage = getKitImage(team.id);
 
   return (
     <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:border-fute-purpleBright/60 hover:shadow-2xl group relative overflow-hidden">

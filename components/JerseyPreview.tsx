@@ -5,7 +5,7 @@ import { TeamId } from '@/lib/types';
 import { Sparkles, ShieldCheck } from 'lucide-react';
 
 interface JerseyPreviewProps {
-  teamId: TeamId;
+  teamId: TeamId | string;
   name?: string;
   jerseyName?: string;
   number: number | string;
@@ -21,7 +21,18 @@ export const JerseyPreview: React.FC<JerseyPreviewProps> = ({
   size = 'G',
 }) => {
   const displayName = jerseyName || name || 'SEU NOME';
-  const kitImage = teamId === 'franca' ? '/kits/franca.jpg' : `/kits/${teamId}.png`;
+
+  // Robust Kit Image Resolver (handles accents, uppercase, and variations)
+  const getKitImage = (id: string) => {
+    const normalized = (id || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (normalized.includes('franc') || normalized === 'franca') return '/kits/franca.jpg';
+    if (normalized.includes('arg') || normalized === 'argentina') return '/kits/argentina.png';
+    if (normalized.includes('alem') || normalized === 'alemanha') return '/kits/alemanha.png';
+    return '/kits/brasil.png';
+  };
+
+  const kitImage = getKitImage(teamId);
+  const normalizedTeamName = (teamId || 'brasil').toUpperCase();
 
   return (
     <div className="bg-fute-card border border-fute-border/80 rounded-3xl p-5 shadow-2xl space-y-4 animate-fadeIn">
@@ -30,7 +41,7 @@ export const JerseyPreview: React.FC<JerseyPreviewProps> = ({
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-fute-gold" />
           <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
-            Modelo de Uniforme Oficial ({teamId.toUpperCase()})
+            Modelo de Uniforme Oficial ({normalizedTeamName})
           </h3>
         </div>
 
@@ -50,6 +61,7 @@ export const JerseyPreview: React.FC<JerseyPreviewProps> = ({
         {/* 3D Kit Image */}
         <div className="relative mx-auto max-w-md my-2 flex items-center justify-center min-h-[320px]">
           <img
+            key={kitImage}
             src={kitImage}
             alt={`Uniforme Oficial ${teamId}`}
             className="w-full h-auto object-contain rounded-xl drop-shadow-2xl transition-transform duration-300 group-hover:scale-[1.02]"
