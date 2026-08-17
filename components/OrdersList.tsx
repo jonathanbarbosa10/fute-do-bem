@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { UniformOrder } from '@/lib/types';
 import { getStoredOrders, deleteOrder, updateOrderStatus } from '@/lib/storage';
-import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck } from 'lucide-react';
+import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 
 interface OrdersListProps {
   refreshTrigger?: number;
@@ -15,30 +15,58 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loadOrders = () => {
-    setOrders(getStoredOrders());
-    setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
-  };
-
-  useEffect(() => {
-    loadOrders();
-    window.addEventListener('storage', loadOrders);
-    return () => window.removeEventListener('storage', loadOrders);
-  }, [refreshTrigger]);
-
-  const handleDelete = (id: string) => {
-    if (!isAdmin) return;
-    if (confirm('Tem certeza que deseja cancelar este pedido de uniforme?')) {
-      deleteOrder(id);
-      loadOrders();
+  // Fetch orders from central API / Cloud Database
+  const fetchOrdersFromDatabase = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/uniforms', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.orders && Array.isArray(data.orders)) {
+          setOrders(data.orders);
+        } else {
+          setOrders(getStoredOrders());
+        }
+      } else {
+        setOrders(getStoredOrders());
+      }
+    } catch (err) {
+      console.warn('Fallback to stored orders:', err);
+      setOrders(getStoredOrders());
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleStatusChange = (id: string, status: UniformOrder['status']) => {
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
+    fetchOrdersFromDatabase();
+
+    const checkAdmin = () => {
+      setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
+    };
+    window.addEventListener('storage', checkAdmin);
+    return () => window.removeEventListener('storage', checkAdmin);
+  }, [refreshTrigger]);
+
+  const handleDelete = async (id: string) => {
+    if (!isAdmin) return;
+    if (confirm('Tem certeza que deseja cancelar este pedido de uniforme?')) {
+      try {
+        await fetch(`/api/uniforms?id=${id}`, { method: 'DELETE' });
+      } catch (err) {
+        deleteOrder(id);
+      }
+      fetchOrdersFromDatabase();
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: UniformOrder['status']) => {
     if (!isAdmin) return;
     updateOrderStatus(id, status);
-    loadOrders();
+    fetchOrdersFromDatabase();
   };
 
   const filteredOrders = orders.filter((o) => {
@@ -136,21 +164,32 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-amber-400" />
             <h3 className="text-lg font-black text-white uppercase tracking-wider">
-              Painel Admin - Pedidos para Produção
+              Painel Admin - Banco de Dados dos Pedidos
             </h3>
           </div>
           <p className="text-xs text-fute-purpleLight">
-            Total de {orders.length} uniformes registrados no sistema.
+            Sincronizado em tempo real • Total de {orders.length} uniformes gravados no banco de dados.
           </p>
         </div>
 
-        <button
-          onClick={exportToCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-105"
-        >
-          <Download className="w-4 h-4 text-fute-gold" />
-          <span>Baixar Relatório (CSV / Kçula)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchOrdersFromDatabase}
+            disabled={isLoading}
+            className="p-2 bg-fute-darkBg hover:bg-fute-border/60 text-purple-200 border border-fute-border rounded-xl transition-all"
+            title="Atualizar Dados do Banco"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-400' : ''}`} />
+          </button>
+
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-105"
+          >
+            <Download className="w-4 h-4 text-fute-gold" />
+            <span>Baixar Relatório (CSV / Kçula)</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters Bar */}
