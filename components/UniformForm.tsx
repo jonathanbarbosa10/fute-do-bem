@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { TeamId, UniformOrder } from '@/lib/types';
+import { TEAMS } from '@/lib/data';
 import { JerseyPreview } from './JerseyPreview';
 import { saveOrder } from '@/lib/storage';
 import confetti from 'canvas-confetti';
-import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, ShieldCheck } from 'lucide-react';
+import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, Lock, ChevronDown } from 'lucide-react';
 
 interface UniformFormProps {
   initialTeamId?: TeamId;
@@ -17,29 +18,51 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   onOrderCreated,
 }) => {
   const [teamId, setTeamId] = useState<TeamId>(initialTeamId);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
+  
   const [playerName, setPlayerName] = useState('');
   const [jerseyName, setJerseyName] = useState('');
   const [number, setNumber] = useState<number | string>(10);
   const [size, setSize] = useState<'P' | 'M' | 'G' | 'GG' | 'XG' | 'XXG'>('G');
   const [position, setPosition] = useState<'Goleiro' | 'Defesa' | 'Meio-campo' | 'Atacante'>('Atacante');
   const [phone, setPhone] = useState('');
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState<UniformOrder | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const team = TEAMS[teamId];
+
+  // When team changes, pre-select the first player in roster
   useEffect(() => {
-    if (initialTeamId) {
-      setTeamId(initialTeamId);
+    if (team && team.players.length > 0) {
+      const firstPlayer = team.players[0];
+      setSelectedPlayerId(firstPlayer.id);
+      setPlayerName(firstPlayer.name);
+      setJerseyName(firstPlayer.name.toUpperCase());
+      setNumber(firstPlayer.number);
+      setPosition(firstPlayer.position);
     }
-  }, [initialTeamId]);
+  }, [teamId]);
+
+  // When player selection changes from dropdown
+  const handlePlayerSelect = (pId: string) => {
+    setSelectedPlayerId(pId);
+    const p = team.players.find((item) => item.id === pId);
+    if (p) {
+      setPlayerName(p.name);
+      setJerseyName(p.name.toUpperCase());
+      setNumber(p.number);
+      setPosition(p.position);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
     if (!playerName.trim()) {
-      setErrorMsg('Por favor, informe seu nome completo.');
+      setErrorMsg('Por favor, selecione ou informe seu nome completo.');
       return;
     }
     if (!jerseyName.trim()) {
@@ -61,7 +84,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         jerseyName: jerseyName.trim().toUpperCase(),
         number: Number(number),
         size,
-        position,
+        position, // Fixed position from official list
         phone: phone.trim(),
       });
 
@@ -98,9 +121,6 @@ export const UniformForm: React.FC<UniformFormProps> = ({
 
   const handleReset = () => {
     setSuccessOrder(null);
-    setPlayerName('');
-    setJerseyName('');
-    setNumber(10);
     setErrorMsg('');
   };
 
@@ -114,10 +134,10 @@ export const UniformForm: React.FC<UniformFormProps> = ({
           </div>
           <div>
             <h2 className="text-xl font-black text-white tracking-wide uppercase">
-              Informações do seu Uniforme
+              Portal do Jogador - Pedido de Kit
             </h2>
             <p className="text-xs text-fute-purpleLight">
-              Preencha os dados para a confecção do seu kit personalizado oficial.
+              Selecione seu nome da lista oficial do campeonato para confeccionar seu kit personalizado.
             </p>
           </div>
         </div>
@@ -129,14 +149,18 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               <CheckCircle className="w-10 h-10" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white">Pedido Confirmado com Sucesso!</h3>
+              <h3 className="text-lg font-black text-white">Pedido Registrado com Sucesso!</h3>
               <p className="text-xs text-purple-200 mt-1">
-                Seu uniforme para o time do{' '}
-                <strong className="text-fute-gold uppercase">{successOrder.teamId}</strong> foi registrado.
+                Seu kit para a seleção do{' '}
+                <strong className="text-fute-gold uppercase">{successOrder.teamId}</strong> foi salvo para produção.
               </p>
             </div>
 
             <div className="p-4 bg-fute-darkBg/80 rounded-xl border border-fute-border/60 text-left text-xs space-y-2">
+              <div className="flex justify-between border-b border-fute-border/40 pb-1">
+                <span className="text-fute-purpleLight">Jogador:</span>
+                <strong className="text-white">{successOrder.playerName}</strong>
+              </div>
               <div className="flex justify-between border-b border-fute-border/40 pb-1">
                 <span className="text-fute-purpleLight">Nome na Camiseta:</span>
                 <strong className="text-white font-mono">{successOrder.jerseyName}</strong>
@@ -150,8 +174,8 @@ export const UniformForm: React.FC<UniformFormProps> = ({
                 <strong className="text-white">{successOrder.size}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-fute-purpleLight">Posição:</span>
-                <strong className="text-white">{successOrder.position}</strong>
+                <span className="text-fute-purpleLight">Posição (Fixa Society):</span>
+                <strong className="text-emerald-400 font-bold">{successOrder.position}</strong>
               </div>
             </div>
 
@@ -173,7 +197,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
             {/* 1. Seleção do Time */}
             <div>
               <label className="block text-xs font-bold text-purple-200 mb-2 uppercase tracking-wider">
-                Selecione seu Time
+                1. Selecione a sua Seleção
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
@@ -199,46 +223,68 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               </div>
             </div>
 
-            {/* 2. Nome do Jogador & Nome na Camiseta */}
+            {/* 2. Selecionar Nome do Jogador da Lista Oficial */}
+            <div>
+              <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-fute-purpleBright" />
+                  <span>2. Selecione seu Nome no Elenco do {team.name}</span>
+                </span>
+                <span className="text-[10px] text-fute-purpleLight font-normal">Convocados do Torneio</span>
+              </label>
+
+              <div className="relative">
+                <select
+                  value={selectedPlayerId}
+                  onChange={(e) => handlePlayerSelect(e.target.value)}
+                  className="w-full px-3.5 py-3 bg-fute-darkBg border border-fute-purpleBright/50 rounded-xl text-white font-bold text-sm focus:outline-none focus:border-fute-purpleLight appearance-none"
+                >
+                  {team.players.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-fute-card text-white py-1">
+                      {p.name} — ({p.position}) #{p.number}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-fute-purpleLight absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Nome na Camiseta & Posição Fixa */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-fute-purpleBright" />
-                  <span>Nome Completo do Jogador</span>
-                </label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={(e) => {
-                    setPlayerName(e.target.value);
-                    if (!jerseyName) {
-                      setJerseyName(e.target.value.split(' ')[0].toUpperCase());
-                    }
-                  }}
-                  placeholder="Ex: Neymar da Silva Junior"
-                  className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white text-sm focus:outline-none focus:border-fute-purpleBright transition-colors"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
-                  <Shirt className="w-3.5 h-3.5 text-fute-purpleBright" />
-                  <span>Nome na Camiseta</span>
+                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Shirt className="w-3.5 h-3.5 text-fute-purpleBright" />
+                    <span>Nome a Estampar na Camiseta</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-400">Editável</span>
                 </label>
                 <input
                   type="text"
                   value={jerseyName}
                   onChange={(e) => setJerseyName(e.target.value.toUpperCase())}
-                  placeholder="Ex: NEYMAR JR"
+                  placeholder="Ex: RENAN"
                   maxLength={16}
                   className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white font-mono text-sm uppercase focus:outline-none focus:border-fute-purpleBright transition-colors"
                   required
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Posição Oficial no Torneio (Fixo)</span>
+                </label>
+                <div className="w-full px-3.5 py-2.5 bg-fute-sidebar/90 border border-fute-border/70 rounded-xl text-emerald-400 font-bold text-sm flex items-center justify-between">
+                  <span>{position}</span>
+                  <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+                    Definida pelo Campeonato
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* 3. Número Desejado & Tamanho */}
+            {/* 4. Número Desejado & Tamanho */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
@@ -281,38 +327,19 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               </div>
             </div>
 
-            {/* 4. Posição & Telefone */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-fute-purpleBright" />
-                  <span>Posição Principal</span>
-                </label>
-                <select
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white text-sm focus:outline-none focus:border-fute-purpleBright transition-colors"
-                >
-                  <option value="Goleiro">Goleiro</option>
-                  <option value="Defesa">Defesa</option>
-                  <option value="Meio-campo">Meio-campo</option>
-                  <option value="Atacante">Atacante</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-fute-purpleBright" />
-                  <span>WhatsApp / Telefone</span>
-                </label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(11) 99999-9999"
-                  className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white text-sm focus:outline-none focus:border-fute-purpleBright transition-colors"
-                />
-              </div>
+            {/* 5. Telefone WhatsApp */}
+            <div>
+              <label className="block text-xs font-bold text-purple-200 mb-1.5 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-fute-purpleBright" />
+                <span>WhatsApp para Contato / Avisos do Torneio</span>
+              </label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="w-full px-3.5 py-2.5 bg-fute-darkBg border border-fute-border rounded-xl text-white text-sm focus:outline-none focus:border-fute-purpleBright transition-colors"
+              />
             </div>
 
             {/* Submit Button */}
@@ -322,7 +349,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               className="w-full py-4 bg-gradient-to-r from-fute-purple via-fute-purpleBright to-purple-500 hover:from-purple-600 hover:to-fute-purple text-white font-extrabold text-sm rounded-xl shadow-xl shadow-purple-950/60 uppercase tracking-wider flex items-center justify-center gap-2 transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4" />
-              <span>{isSubmitting ? 'GERANDO PEDIDO...' : 'CONFIRMAR PEDIDO DE UNIFORME'}</span>
+              <span>{isSubmitting ? 'SALVANDO SEU KIT...' : 'CONFIRMAR E SALVAR MEU KIT DE UNIFORME'}</span>
             </button>
           </form>
         )}
