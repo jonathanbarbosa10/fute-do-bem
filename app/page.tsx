@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { TEAMS } from '@/lib/data';
 import { TeamCard } from '@/components/TeamCard';
-import { Shirt, Users, Calendar, Trophy, ArrowRight, Sparkles, MapPin, Clock, HelpCircle } from 'lucide-react';
+import { Logo } from '@/components/Logo';
+import { Shirt, Users, Calendar, Trophy, ArrowRight, Sparkles, MapPin, HelpCircle } from 'lucide-react';
 
 export default function OverviewPage() {
   const teamsList = Object.values(TEAMS);
@@ -17,7 +18,7 @@ export default function OverviewPage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-fute-purple/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-fute-purpleBright/20 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fute-purple/30 border border-fute-purpleLight/40 text-xs font-bold text-fute-purpleLight">
               <Sparkles className="w-3.5 h-3.5 text-fute-gold" />
@@ -51,27 +52,9 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Banner Quick Stats Badges */}
-          <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-            <div className="p-3 sm:p-4 rounded-2xl bg-fute-darkBg/80 border border-fute-border/60 text-center">
-              <span className="text-xl sm:text-2xl font-black text-white block">4</span>
-              <span className="text-[10px] sm:text-[11px] text-fute-purpleLight font-semibold">Seleções</span>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-2xl bg-fute-darkBg/80 border border-fute-border/60 text-center">
-              <span className="text-xl sm:text-2xl font-black text-fute-gold block">39</span>
-              <span className="text-[10px] sm:text-[11px] text-fute-purpleLight font-semibold">Convocados</span>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-2xl bg-fute-darkBg/80 border border-fute-border/60 text-center">
-              <span className="text-xl sm:text-2xl font-black text-emerald-400 block">Society</span>
-              <span className="text-[10px] sm:text-[11px] text-fute-purpleLight font-semibold">1 Gol + 7 Linha</span>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-2xl bg-fute-darkBg/80 border border-fute-border/60 text-center">
-              <span className="text-xl sm:text-2xl font-black text-fute-purpleBright block">Kçula</span>
-              <span className="text-[10px] sm:text-[11px] text-fute-purpleLight font-semibold">Uniformes</span>
-            </div>
+          {/* Replacement: Official Event Logo Shield Emblem */}
+          <div className="flex items-center justify-center p-6 sm:p-8 bg-fute-darkBg/60 border border-fute-purpleBright/40 rounded-3xl shadow-2xl hover:border-fute-gold/60 transition-all duration-300 transform hover:scale-105 shrink-0">
+            <Logo size="xl" showText={true} />
           </div>
         </div>
       </div>
