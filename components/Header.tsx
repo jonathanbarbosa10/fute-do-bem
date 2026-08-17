@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'Fute do Bem: Campeonato Beneficente',
+  title = 'Fute do Bem 2026: Campeonato Beneficente',
   subtitle = 'Edição Especial de Seleções',
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-fute-card border border-fute-purpleBright/30 text-xs">
         <Calendar className="w-3.5 h-3.5 text-fute-purpleBright" />
         <span className="text-purple-200">Pedidos de Uniforme até:</span>
-        <strong className="text-fute-gold font-bold">15 de Outubro</strong>
+        <strong className="text-fute-gold font-bold">30 de Agosto</strong>
       </div>
 
       {/* Right Quick Actions & Role Selector */}
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <h3 className="font-extrabold text-base sm:text-lg uppercase text-white">Selecione seu Tipo de Acesso</h3>
               <p className="text-xs text-fute-purpleLight">
-                Escolha como deseja navegar pela plataforma do Fute do Bem:
+                Escolha como deseja navegar pela plataforma do Fute do Bem 2026:
               </p>
             </div>
 

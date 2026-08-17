@@ -4,8 +4,8 @@ import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'Fute do Bem - Campeonato Beneficente',
-  description: 'Ambiente oficial do campeonato beneficente Fute do Bem. Veja escalações, times e encomende o kit de uniforme oficial.',
+  title: 'Fute do Bem 2026 - Campeonato Beneficente',
+  description: 'Ambiente oficial do campeonato beneficente Fute do Bem 2026. Veja escalações, times e encomende o kit de uniforme oficial.',
 };
 
 export const viewport: Viewport = {
