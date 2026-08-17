@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TEAMS } from '@/lib/data';
-import { BarChart3, Trophy, Flame, Award, ShieldCheck, Lock, Plus, Edit2 } from 'lucide-react';
+import { BarChart3, Trophy, Flame, Award, ShieldCheck, Lock, HelpCircle, Swords, Medal } from 'lucide-react';
 
 export default function EstatisticasPage() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -16,7 +16,7 @@ export default function EstatisticasPage() {
     return () => window.removeEventListener('storage', checkAdmin);
   }, []);
 
-  // Aggregate Top Scorers across all 4 teams
+  // Aggregate Top Scorers across all 4 teams (starting clean)
   const allPlayers = Object.values(TEAMS).flatMap((t) =>
     t.players.map((p) => ({ ...p, teamName: t.name, flagEmoji: t.flagEmoji }))
   );
@@ -31,20 +31,6 @@ export default function EstatisticasPage() {
     .sort((a, b) => (b.assists || 0) - (a.assists || 0))
     .slice(0, 5);
 
-  const [standings, setStandings] = useState([
-    { pos: 1, team: TEAMS.brasil, pts: 6, j: 2, v: 2, e: 0, d: 0, gp: 5, gc: 2, sg: 3 },
-    { pos: 2, team: TEAMS.argentina, pts: 4, j: 2, v: 1, e: 1, d: 0, gp: 4, gc: 3, sg: 1 },
-    { pos: 3, team: TEAMS.franca, pts: 1, j: 2, v: 0, e: 1, d: 1, gp: 2, gc: 3, sg: -1 },
-    { pos: 4, team: TEAMS.alemanha, pts: 0, j: 2, v: 0, e: 0, d: 2, gp: 1, gc: 4, sg: -3 },
-  ]);
-
-  const updatePts = (teamId: string, delta: number) => {
-    if (!isAdmin) return;
-    setStandings((prev) =>
-      prev.map((row) => (row.team.id === teamId ? { ...row, pts: Math.max(0, row.pts + delta) } : row))
-    );
-  };
-
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Header */}
@@ -52,10 +38,10 @@ export default function EstatisticasPage() {
         <div>
           <h1 className="text-2xl font-black text-white uppercase tracking-wide flex items-center gap-2">
             <BarChart3 className="w-7 h-7 text-fute-purpleBright" />
-            Estatísticas & Classificação
+            Estatísticas & Chaveamento Mata-Mata
           </h1>
           <p className="text-xs text-fute-purpleLight">
-            {isAdmin ? 'Painel Admin de gestão de pontuação e estatísticas.' : 'Visualização da classificação do campeonato (Somente Leitura).'}
+            Chave oficial do torneio com Semi-Finais, Disputa de 3º Lugar e a Grande Final.
           </p>
         </div>
 
@@ -70,75 +56,142 @@ export default function EstatisticasPage() {
         )}
       </div>
 
-      {/* Standings Table */}
-      <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-fute-border/60 pb-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-fute-gold" />
-            <h2 className="text-base font-extrabold text-white uppercase tracking-wider">
-              Tabela de Classificação
+      {/* TOURNAMENT BRACKET (CHAVE MATA-MATA) */}
+      <div className="bg-fute-card border border-fute-border/80 rounded-3xl p-5 sm:p-8 shadow-2xl space-y-6">
+        <div className="flex items-center justify-between border-b border-fute-border/60 pb-4">
+          <div className="flex items-center gap-2.5">
+            <Swords className="w-6 h-6 text-fute-gold" />
+            <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider">
+              Chave do Torneio (Mata-Mata)
             </h2>
           </div>
-          {isAdmin && (
-            <span className="text-xs text-amber-400 font-bold">Clique em + / - para ajustar pontos</span>
-          )}
+          <span className="text-xs font-extrabold text-fute-purpleBright bg-fute-purple/20 px-3 py-1 rounded-full border border-fute-purpleLight/30">
+            Fase Final
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-purple-200">
-            <thead className="bg-fute-sidebar/80 text-fute-purpleLight uppercase text-[10px] font-bold border-b border-fute-border/60">
-              <tr>
-                <th className="py-3 px-3">#</th>
-                <th className="py-3 px-3">Seleção</th>
-                <th className="py-3 px-3 text-center">PTS</th>
-                <th className="py-3 px-3 text-center">J</th>
-                <th className="py-3 px-3 text-center">V</th>
-                <th className="py-3 px-3 text-center">E</th>
-                <th className="py-3 px-3 text-center">D</th>
-                <th className="py-3 px-3 text-center">GP</th>
-                <th className="py-3 px-3 text-center">GC</th>
-                <th className="py-3 px-3 text-center">SG</th>
-                {isAdmin && <th className="py-3 px-3 text-right">Ação Admin</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-fute-border/40">
-              {standings.map((row) => (
-                <tr key={row.team.id} className="hover:bg-fute-cardHover/60 transition-colors">
-                  <td className="py-3.5 px-3 font-bold text-white">{row.pos}</td>
-                  <td className="py-3.5 px-3 font-extrabold text-white flex items-center gap-2">
-                    <span className="text-xl">{row.team.flagEmoji}</span>
-                    <span>{row.team.name}</span>
-                  </td>
-                  <td className="py-3.5 px-3 text-center font-black text-fute-gold text-sm">{row.pts}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.j}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.v}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.e}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.d}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.gp}</td>
-                  <td className="py-3.5 px-3 text-center font-mono">{row.gc}</td>
-                  <td className="py-3.5 px-3 text-center font-mono font-bold">{row.sg > 0 ? `+${row.sg}` : row.sg}</td>
-                  {isAdmin && (
-                    <td className="py-3.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => updatePts(row.team.id, -1)}
-                          className="px-2 py-0.5 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded font-bold"
-                        >
-                          -1
-                        </button>
-                        <button
-                          onClick={() => updatePts(row.team.id, 1)}
-                          className="px-2 py-0.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 rounded font-bold"
-                        >
-                          +1
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Bracket Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center relative">
+          {/* Column 1: Semi-Finais */}
+          <div className="space-y-6">
+            <h3 className="text-xs font-extrabold text-fute-purpleLight uppercase tracking-wider text-center border-b border-fute-border/40 pb-2">
+              Semi-Finais (SF)
+            </h3>
+
+            {/* SF 1 */}
+            <div className="p-4 rounded-2xl bg-fute-sidebar/90 border border-fute-border/60 shadow-lg space-y-3">
+              <div className="flex items-center justify-between text-[11px] font-bold text-fute-purpleLight border-b border-fute-border/30 pb-1.5">
+                <span>SEMI-FINAL 1</span>
+                <span className="text-fute-gold">A definir</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-purple-400" />
+                    <span>A definir</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-purple-400" />
+                    <span>A definir</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+              </div>
+            </div>
+
+            {/* SF 2 */}
+            <div className="p-4 rounded-2xl bg-fute-sidebar/90 border border-fute-border/60 shadow-lg space-y-3">
+              <div className="flex items-center justify-between text-[11px] font-bold text-fute-purpleLight border-b border-fute-border/30 pb-1.5">
+                <span>SEMI-FINAL 2</span>
+                <span className="text-fute-gold">A definir</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-purple-400" />
+                    <span>A definir</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-purple-400" />
+                    <span>A definir</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Disputa de 3º Lugar */}
+          <div className="space-y-6">
+            <h3 className="text-xs font-extrabold text-purple-300 uppercase tracking-wider text-center border-b border-fute-border/40 pb-2 flex items-center justify-center gap-1.5">
+              <Medal className="w-4 h-4 text-amber-500" />
+              <span>Disputa de 3º Lugar</span>
+            </h3>
+
+            <div className="p-4 rounded-2xl bg-fute-sidebar/90 border border-amber-500/30 shadow-lg space-y-3">
+              <div className="flex items-center justify-between text-[11px] font-bold text-amber-300 border-b border-fute-border/30 pb-1.5">
+                <span>3º LUGAR</span>
+                <span>A definir</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-amber-400" />
+                    <span>Perdedor SF1</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-fute-darkBg/80 border border-fute-border/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-amber-400" />
+                    <span>Perdedor SF2</span>
+                  </div>
+                  <span className="font-mono text-purple-300">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 3: Grande Final */}
+          <div className="space-y-6">
+            <h3 className="text-xs font-extrabold text-fute-gold uppercase tracking-wider text-center border-b border-fute-border/40 pb-2 flex items-center justify-center gap-1.5">
+              <Trophy className="w-4 h-4 text-fute-gold" />
+              <span>Grande Final</span>
+            </h3>
+
+            <div className="p-5 rounded-2xl bg-gradient-to-b from-purple-900/60 to-fute-card border-2 border-fute-gold/80 shadow-2xl space-y-3 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-fute-gold/10 rounded-full blur-xl pointer-events-none" />
+
+              <div className="flex items-center justify-between text-xs font-black text-fute-gold border-b border-fute-gold/30 pb-2">
+                <span className="flex items-center gap-1">
+                  <Trophy className="w-3.5 h-3.5" /> FINALÍSSIMA
+                </span>
+                <span>A definir</span>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-fute-darkBg/90 border border-fute-gold/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5 text-fute-gold" />
+                    <span>Vencedor SF1</span>
+                  </div>
+                  <span className="font-mono text-fute-gold text-sm font-black">-</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-fute-darkBg/90 border border-fute-gold/40 text-xs font-bold text-white">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5 text-fute-gold" />
+                    <span>Vencedor SF2</span>
+                  </div>
+                  <span className="font-mono text-fute-gold text-sm font-black">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -155,7 +208,9 @@ export default function EstatisticasPage() {
 
           <div className="space-y-2">
             {topScorers.length === 0 ? (
-              <p className="text-xs text-purple-300/50 py-4 text-center">Gols serão registrados com o início das partidas.</p>
+              <p className="text-xs text-purple-300/60 py-6 text-center italic">
+                Aguardando o início dos jogos para registro de gols.
+              </p>
             ) : (
               topScorers.map((p, idx) => (
                 <div
@@ -193,7 +248,9 @@ export default function EstatisticasPage() {
 
           <div className="space-y-2">
             {topAssists.length === 0 ? (
-              <p className="text-xs text-purple-300/50 py-4 text-center">Assistências serão registradas no torneio.</p>
+              <p className="text-xs text-purple-300/60 py-6 text-center italic">
+                Aguardando o início dos jogos para registro de passes.
+              </p>
             ) : (
               topAssists.map((p, idx) => (
                 <div

@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   title = 'Fute do Bem: Campeonato Beneficente',
-  subtitle = 'Edição Especial de Uniformes (Society 8x8)',
+  subtitle = 'Edição Especial de Seleções',
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -52,26 +52,26 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-fute-darkBg/95 backdrop-blur-md border-b border-fute-border/60 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      {/* Title & Organizer Info */}
-      <div>
+    <header className="sticky top-0 z-30 w-full bg-fute-darkBg/95 backdrop-blur-md border-b border-fute-border/60 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      {/* Title & Subtitle + Prominent Organizer Name */}
+      <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-sm sm:text-lg font-extrabold text-white tracking-wide">
+          <h1 className="text-base sm:text-xl font-black text-white tracking-wide">
             {title}
           </h1>
-          <span className="px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
             Society
           </span>
-          <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fute-purple/30 border border-fute-purpleLight/40 text-[10px] sm:text-xs font-bold text-fute-gold shadow-sm">
-            <UserCheck className="w-3 h-3 text-fute-gold" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-purple-900/80 to-fute-card border border-fute-gold/60 text-xs font-black text-fute-gold shadow-md">
+            <UserCheck className="w-3.5 h-3.5 text-fute-gold" />
             Organizador: Renato Pitanga
           </span>
         </div>
-        <p className="text-[11px] sm:text-xs text-fute-purpleLight font-medium">{subtitle}</p>
+        <p className="text-xs text-fute-purpleLight font-semibold">{subtitle}</p>
       </div>
 
       {/* Center Status Pill (Desktop/Tablet) */}
-      <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-fute-card border border-fute-purpleBright/30 text-xs">
+      <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-fute-card border border-fute-purpleBright/30 text-xs">
         <Calendar className="w-3.5 h-3.5 text-fute-purpleBright" />
         <span className="text-purple-200">Pedidos de Uniforme até:</span>
         <strong className="text-fute-gold font-bold">15 de Outubro</strong>
@@ -81,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2">
         <Link
           href="/uniforme"
-          className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-950/50 transition-all duration-200"
+          className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-950/50 transition-all duration-200 hover:scale-105"
         >
           <Shirt className="w-3.5 h-3.5" />
           <span>Meu Uniforme</span>
@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Access Role Switcher Button */}
         <button
           onClick={() => setShowRoleModal(true)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 border rounded-xl text-xs font-bold transition-all shadow-md ${
+          className={`flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2 border rounded-xl text-xs font-bold transition-all shadow-md ${
             isAdmin
               ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
               : 'bg-fute-card border-fute-purpleBright/40 text-purple-200 hover:text-white hover:bg-fute-cardHover'

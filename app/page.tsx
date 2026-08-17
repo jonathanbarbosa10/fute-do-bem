@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { TEAMS, MATCHES } from '@/lib/data';
+import { TEAMS } from '@/lib/data';
 import { TeamCard } from '@/components/TeamCard';
-import { Shirt, Users, Calendar, Trophy, ArrowRight, Sparkles } from 'lucide-react';
+import { Shirt, Users, Calendar, Trophy, ArrowRight, Sparkles, HelpCircle } from 'lucide-react';
 
 export default function OverviewPage() {
   const teamsList = Object.values(TEAMS);
@@ -21,7 +21,7 @@ export default function OverviewPage() {
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fute-purple/30 border border-fute-purpleLight/40 text-xs font-bold text-fute-purpleLight">
               <Sparkles className="w-3.5 h-3.5 text-fute-gold" />
-              <span>Edição Beneficente 2024 / 2025</span>
+              <span>Edição Especial de Seleções</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
@@ -106,51 +106,66 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* Matches Schedule Section */}
+      {/* Matches Schedule Section (A definir para os 2 jogos) */}
       <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-fute-border/60 pb-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-fute-purpleBright" />
             <h3 className="text-sm sm:text-base font-extrabold text-white uppercase tracking-wider">
-              Próximos Confrontos Beneficentes
+              Próximos Confrontos Beneficentes (Mata-Mata)
             </h3>
           </div>
           <span className="text-xs text-fute-gold font-bold">Arena Beneficente</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {MATCHES.slice(0, 2).map((match) => {
-            const teamA = TEAMS[match.teamA];
-            const teamB = TEAMS[match.teamB];
-            return (
-              <div
-                key={match.id}
-                className="p-3.5 sm:p-4 rounded-xl bg-fute-sidebar/80 border border-fute-border/40 flex items-center justify-between gap-3"
-              >
-                {/* Team A */}
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
-                  <span className="text-xl sm:text-2xl">{teamA.flagEmoji}</span>
-                  <span>{teamA.name}</span>
-                </div>
+          {/* Semi-Final 1 */}
+          <div className="p-4 rounded-xl bg-fute-sidebar/80 border border-fute-border/40 space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-fute-purpleLight border-b border-fute-border/30 pb-2">
+              <span>Semi-Final 1</span>
+              <span className="text-fute-gold font-semibold">Data: A definir</span>
+            </div>
 
-                {/* Versus / Score */}
-                <div className="text-center">
-                  <span className="text-xs font-black text-fute-purpleBright bg-fute-purple/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-fute-purpleLight/30">
-                    VS
-                  </span>
-                  <span className="block text-[10px] text-fute-purpleLight/70 mt-1 font-medium">
-                    {match.time}
-                  </span>
-                </div>
-
-                {/* Team B */}
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
-                  <span>{teamB.name}</span>
-                  <span className="text-xl sm:text-2xl">{teamB.flagEmoji}</span>
-                </div>
+            <div className="flex items-center justify-between gap-3 py-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
+                <HelpCircle className="w-6 h-6 text-purple-400" />
+                <span>A definir</span>
               </div>
-            );
-          })}
+
+              <div className="text-center px-3 py-1 bg-fute-purple/20 rounded-full border border-fute-purpleLight/30 text-xs font-black text-fute-purpleBright">
+                VS
+              </div>
+
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
+                <span>A definir</span>
+                <HelpCircle className="w-6 h-6 text-purple-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Semi-Final 2 */}
+          <div className="p-4 rounded-xl bg-fute-sidebar/80 border border-fute-border/40 space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-fute-purpleLight border-b border-fute-border/30 pb-2">
+              <span>Semi-Final 2</span>
+              <span className="text-fute-gold font-semibold">Data: A definir</span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 py-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
+                <HelpCircle className="w-6 h-6 text-purple-400" />
+                <span>A definir</span>
+              </div>
+
+              <div className="text-center px-3 py-1 bg-fute-purple/20 rounded-full border border-fute-purpleLight/30 text-xs font-black text-fute-purpleBright">
+                VS
+              </div>
+
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
+                <span>A definir</span>
+                <HelpCircle className="w-6 h-6 text-purple-400" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
