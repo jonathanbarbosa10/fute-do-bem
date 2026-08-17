@@ -15,10 +15,10 @@ export const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
 
   const getKitImage = (id: string) => {
     const normalized = (id || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (normalized.includes('franc') || normalized === 'franca') return '/kits/franca.jpg';
+    if (normalized.includes('franc') || normalized === 'franca') return '/kits/franca.png';
     if (normalized.includes('arg') || normalized === 'argentina') return '/kits/argentina.png';
     if (normalized.includes('alem') || normalized === 'alemanha') return '/kits/alemanha.png';
-    return '/kits/brasil.png';
+    return '/kits/brasil.jpg';
   };
 
   const kitImage = getKitImage(team.id);
