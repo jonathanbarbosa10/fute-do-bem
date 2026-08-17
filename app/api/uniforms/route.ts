@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { INITIAL_ORDERS } from '@/lib/data';
 import { UniformOrder } from '@/lib/types';
 
-// In-memory fallback array for server environment
+// Central server in-memory database for Vercel deployment
 let serverOrders: UniformOrder[] = [...INITIAL_ORDERS];
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { teamId, playerName, jerseyName, number, size, position, phone } = body;
+    const { id, teamId, playerName, jerseyName, number, size, position, phone } = body;
 
     if (!teamId || !playerName || !jerseyName || !number || !size) {
       return NextResponse.json(
@@ -21,24 +21,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const newOrder: UniformOrder = {
-      id: 'ord-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
-      teamId,
-      playerName,
-      jerseyName: jerseyName.toUpperCase(),
-      number: Number(number),
-      size,
-      position: position || 'Atacante',
-      phone: phone || '',
-      createdAt: new Date().toISOString().split('T')[0],
-      status: 'Pendente',
-    };
+    const now = new Date().toISOString().split('T')[0];
 
-    serverOrders = [newOrder, ...serverOrders];
+    // Check if updating existing order by id or playerName
+    const existingIndex = serverOrders.findIndex(
+      (o) => (id && o.id === id) || (o.playerName.toLowerCase() === playerName.toLowerCase() && o.teamId === teamId)
+    );
 
-    return NextResponse.json({ success: true, order: newOrder }, { status: 201 });
+    let finalOrder: UniformOrder;
+
+    if (existingIndex >= 0) {
+      finalOrder = {
+        ...serverOrders[existingIndex],
+        teamId,
+        playerName,
+        jerseyName: jerseyName.toUpperCase(),
+        number: Number(number),
+        size,
+        position: position || serverOrders[existingIndex].position,
+        phone: phone || '',
+        updatedAt: now,
+      };
+      serverOrders[existingIndex] = finalOrder;
+    } else {
+      finalOrder = {
+        id: id || 'ord-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5),
+        teamId,
+        playerName,
+        jerseyName: jerseyName.toUpperCase(),
+        number: Number(number),
+        size,
+        position: position || 'Atacante',
+        phone: phone || '',
+        createdAt: now,
+        status: 'Pendente',
+      };
+      serverOrders.unshift(finalOrder);
+    }
+
+    return NextResponse.json({ success: true, order: finalOrder }, { status: 201 });
   } catch (error) {
-    console.error('Error creating uniform order:', error);
+    console.error('Error saving uniform order:', error);
     return NextResponse.json({ error: 'Falha interna ao registrar pedido.' }, { status: 500 });
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Shirt, Heart, Calendar, Lock, Unlock, ShieldAlert } from 'lucide-react';
+import { Shirt, Calendar, Lock, Unlock, ShieldCheck, User, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   title?: string;
@@ -14,23 +14,26 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle = 'Edição Especial de Uniformes (Society 8x8)',
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    const savedAdmin = localStorage.getItem('fute_admin_mode');
-    if (savedAdmin === 'true') {
-      setIsAdmin(true);
-    }
+    const checkAdmin = () => {
+      setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
+    };
+    checkAdmin();
+    window.addEventListener('storage', checkAdmin);
   }, []);
 
-  const toggleAdmin = () => {
-    if (isAdmin) {
+  const switchRole = (role: 'player' | 'admin') => {
+    if (role === 'player') {
       setIsAdmin(false);
       localStorage.setItem('fute_admin_mode', 'false');
+      window.dispatchEvent(new Event('storage'));
+      setShowRoleModal(false);
     } else {
-      setShowPinModal(true);
+      setShowRoleModal(true);
     }
   };
 
@@ -39,7 +42,8 @@ export const Header: React.FC<HeaderProps> = ({
     if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'futedobem') {
       setIsAdmin(true);
       localStorage.setItem('fute_admin_mode', 'true');
-      setShowPinModal(false);
+      window.dispatchEvent(new Event('storage'));
+      setShowRoleModal(false);
       setPinInput('');
       setErrorMsg('');
     } else {
@@ -69,69 +73,119 @@ export const Header: React.FC<HeaderProps> = ({
         <strong className="text-fute-gold font-bold">15 de Outubro</strong>
       </div>
 
-      {/* Right Quick Actions & Admin Lock */}
+      {/* Right Quick Actions & Role Selector */}
       <div className="flex items-center gap-3">
         <Link
           href="/uniforme"
-          className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright hover:from-purple-600 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-950/50 transition-all duration-200"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright hover:from-purple-600 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-950/50 transition-all duration-200"
         >
           <Shirt className="w-3.5 h-3.5" />
           <span>Meu Uniforme</span>
         </Link>
 
-        {/* Organizer / Admin Mode Toggle */}
+        {/* Access Role Switcher Button */}
         <button
-          onClick={toggleAdmin}
-          className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all ${
+          onClick={() => setShowRoleModal(true)}
+          className={`flex items-center gap-2 px-3.5 py-2 border rounded-xl text-xs font-bold transition-all shadow-md ${
             isAdmin
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-              : 'bg-fute-card border-fute-border/60 text-purple-300/70 hover:text-white'
+              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+              : 'bg-fute-card border-fute-purpleBright/40 text-purple-200 hover:text-white hover:bg-fute-cardHover'
           }`}
-          title={isAdmin ? 'Modo Organizador Ativo (Altera informações do torneio)' : 'Acesso Restrito ao Organizador'}
         >
-          {isAdmin ? <Unlock className="w-3.5 h-3.5 text-amber-400" /> : <Lock className="w-3.5 h-3.5" />}
-          <span>{isAdmin ? 'Organizador' : 'Acesso Admin'}</span>
+          {isAdmin ? <ShieldCheck className="w-4 h-4 text-amber-400" /> : <User className="w-4 h-4 text-fute-purpleBright" />}
+          <span>{isAdmin ? 'Acesso ADMIN' : 'Acesso JOGADOR'}</span>
         </button>
       </div>
 
-      {/* Admin PIN Modal */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-fute-card border border-fute-purpleBright/60 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Lock className="w-5 h-5 text-fute-gold" />
-              <h3 className="font-extrabold text-base uppercase">Área do Organizador</h3>
-            </div>
-            <p className="text-xs text-fute-purpleLight">
-              Digite a senha do organizador para habilitar a edição das demais abas e dados do campeonato.
-            </p>
-
-            <form onSubmit={handleAdminAuth} className="space-y-3">
-              {errorMsg && <p className="text-xs text-red-400 font-bold">{errorMsg}</p>}
-              <input
-                type="password"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="Senha (Dica: 1234)"
-                className="w-full px-3.5 py-2 bg-fute-darkBg border border-fute-border rounded-xl text-white font-mono text-sm focus:outline-none focus:border-fute-purpleBright"
-                autoFocus
-              />
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPinModal(false)}
-                  className="w-1/2 py-2 bg-fute-border/40 hover:bg-fute-border text-purple-200 text-xs font-bold rounded-xl"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2 bg-fute-purpleBright hover:bg-purple-600 text-white text-xs font-extrabold rounded-xl shadow-lg"
-                >
-                  Desbloquear
-                </button>
+      {/* Access Selection Modal */}
+      {showRoleModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-fute-card border border-fute-purpleBright/60 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl animate-fadeIn">
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 mx-auto rounded-full bg-fute-purple/30 border border-fute-purpleLight flex items-center justify-center text-fute-purpleBright">
+                <Sparkles className="w-6 h-6" />
               </div>
-            </form>
+              <h3 className="font-extrabold text-lg uppercase text-white">Selecione seu Tipo de Acesso</h3>
+              <p className="text-xs text-fute-purpleLight">
+                Escolha como deseja navegar pela plataforma do Fute do Bem:
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Option 1: Player */}
+              <button
+                type="button"
+                onClick={() => switchRole('player')}
+                className={`p-4 rounded-2xl border text-left flex flex-col justify-between gap-3 transition-all ${
+                  !isAdmin
+                    ? 'bg-fute-purple/30 border-fute-purpleBright text-white ring-2 ring-fute-purpleBright'
+                    : 'bg-fute-sidebar/60 border-fute-border/50 text-purple-300/70 hover:bg-fute-cardHover hover:text-white'
+                }`}
+              >
+                <User className="w-6 h-6 text-fute-purpleBright" />
+                <div>
+                  <h4 className="font-extrabold text-sm text-white">Acesso JOGADOR</h4>
+                  <p className="text-[10px] text-fute-purpleLight mt-1">
+                    Preencher ou editar meu kit de uniforme e ver a escalação do meu time.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Admin */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (isAdmin) {
+                    setShowRoleModal(false);
+                  }
+                }}
+                className={`p-4 rounded-2xl border text-left flex flex-col justify-between gap-3 transition-all ${
+                  isAdmin
+                    ? 'bg-amber-500/20 border-amber-500 text-white ring-2 ring-amber-400'
+                    : 'bg-fute-sidebar/60 border-fute-border/50 text-purple-300/70 hover:bg-fute-cardHover hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="w-6 h-6 text-amber-400" />
+                <div>
+                  <h4 className="font-extrabold text-sm text-white">Acesso ADMIN</h4>
+                  <p className="text-[10px] text-fute-purpleLight mt-1">
+                    Gerenciar pedidos para confecção, alterar estatísticas e organizar partidas.
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* If Admin PIN needed */}
+            {!isAdmin && (
+              <form onSubmit={handleAdminAuth} className="pt-2 border-t border-fute-border/40 space-y-3">
+                <label className="block text-xs font-bold text-amber-300">
+                  Insira a Senha do Organizador para Acesso ADMIN:
+                </label>
+                {errorMsg && <p className="text-xs text-red-400 font-bold">{errorMsg}</p>}
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="Senha (Dica: 1234)"
+                    className="flex-1 px-3.5 py-2 bg-fute-darkBg border border-fute-border rounded-xl text-white font-mono text-sm focus:outline-none focus:border-fute-purpleBright"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md"
+                  >
+                    Entrar Admin
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <button
+              onClick={() => setShowRoleModal(false)}
+              className="w-full py-2.5 bg-fute-border/40 hover:bg-fute-border text-purple-200 text-xs font-bold rounded-xl transition-colors"
+            >
+              Fechar
+            </button>
           </div>
         </div>
       )}

@@ -34,7 +34,9 @@ export interface UniformOrder {
   position: 'Goleiro' | 'Defesa' | 'Meio-campo' | 'Atacante';
   phone?: string;
   createdAt: string;
+  updatedAt?: string;
   status: 'Pendente' | 'Confirmado' | 'Em Confeccao' | 'Entregue';
+  deviceId?: string;
 }
 
 export interface Match {
@@ -49,10 +51,4 @@ export interface Match {
   stadium: string;
 }
 
-export interface Donation {
-  id: string;
-  donorName: string;
-  amount: number;
-  timestamp: string;
-  message?: string;
-}
+export type UserRole = 'player' | 'admin';

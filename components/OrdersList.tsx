@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UniformOrder, TeamId } from '@/lib/types';
+import { UniformOrder } from '@/lib/types';
 import { getStoredOrders, deleteOrder, updateOrderStatus } from '@/lib/storage';
-import { Shirt, Search, Download, Trash2, Filter, CheckCircle2, Clock, Factory } from 'lucide-react';
+import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck } from 'lucide-react';
 
 interface OrdersListProps {
   refreshTrigger?: number;
@@ -14,16 +14,21 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const loadOrders = () => {
     setOrders(getStoredOrders());
+    setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
   };
 
   useEffect(() => {
     loadOrders();
+    window.addEventListener('storage', loadOrders);
+    return () => window.removeEventListener('storage', loadOrders);
   }, [refreshTrigger]);
 
   const handleDelete = (id: string) => {
+    if (!isAdmin) return;
     if (confirm('Tem certeza que deseja cancelar este pedido de uniforme?')) {
       deleteOrder(id);
       loadOrders();
@@ -31,6 +36,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
   };
 
   const handleStatusChange = (id: string, status: UniformOrder['status']) => {
+    if (!isAdmin) return;
     updateOrderStatus(id, status);
     loadOrders();
   };
@@ -47,6 +53,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
 
   // Export to CSV for clothing manufacturer (Kçula Sports)
   const exportToCSV = () => {
+    if (!isAdmin) return;
     const headers = ['ID', 'Time', 'Nome do Jogador', 'Nome na Camiseta', 'Numero', 'Tamanho', 'Posicao', 'Telefone', 'Status', 'Data'];
     const rows = filteredOrders.map((o) => [
       o.id,
@@ -101,15 +108,37 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
     alemanha: '🇩🇪 Alemanha',
   };
 
+  // If not admin, hide management table or show read-only protected notice
+  if (!isAdmin) {
+    return (
+      <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-6 shadow-xl text-center space-y-3">
+        <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-400">
+          <Lock className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-extrabold text-white uppercase tracking-wider">
+          Pedidos Confirmados para Produção (Acesso Restrito)
+        </h3>
+        <p className="text-xs text-fute-purpleLight max-w-md mx-auto">
+          A lista completa de uniformes encomendados e exportação de relatórios para a confecção é de acesso exclusivo do **Organizador (Admin)**.
+        </p>
+        <span className="inline-block text-[11px] font-semibold text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+          Jogadores podem cadastrar ou editar o seu próprio kit no formulário acima.
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-fute-card border border-fute-border/80 rounded-2xl p-6 shadow-xl space-y-5">
+    <div className="bg-fute-card border border-amber-500/40 rounded-2xl p-6 shadow-xl space-y-5">
       {/* Header & Export Button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-fute-border/60">
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <Shirt className="w-5 h-5 text-fute-purpleBright" />
-            Pedidos Confirmados para Produção
-          </h3>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-amber-400" />
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">
+              Painel Admin - Pedidos para Produção
+            </h3>
+          </div>
           <p className="text-xs text-fute-purpleLight">
             Total de {orders.length} uniformes registrados no sistema.
           </p>
@@ -117,7 +146,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
 
         <button
           onClick={exportToCSV}
-          className="flex items-center gap-2 px-3.5 py-2 bg-fute-sidebar hover:bg-fute-border/60 border border-fute-purpleBright/40 text-purple-200 hover:text-white text-xs font-bold rounded-xl transition-all shadow-md"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-fute-purple to-fute-purpleBright text-white text-xs font-bold rounded-xl transition-all shadow-md hover:scale-105"
         >
           <Download className="w-4 h-4 text-fute-gold" />
           <span>Baixar Relatório (CSV / Kçula)</span>
@@ -126,19 +155,17 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
 
       {/* Filters Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Search */}
         <div className="relative">
           <Search className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por jogador, camisa ou numero..."
+            placeholder="Buscar por jogador, camisa ou número..."
             className="w-full pl-9 pr-3 py-2 bg-fute-darkBg border border-fute-border rounded-xl text-xs text-white placeholder-purple-300/40 focus:outline-none focus:border-fute-purpleBright"
           />
         </div>
 
-        {/* Filter by Team */}
         <select
           value={selectedTeam}
           onChange={(e) => setSelectedTeam(e.target.value)}
@@ -151,7 +178,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           <option value="alemanha">🇩🇪 Alemanha</option>
         </select>
 
-        {/* Filter by Status */}
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
@@ -180,7 +206,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
                 <th className="py-3 px-3">Tamanho</th>
                 <th className="py-3 px-3">Jogador</th>
                 <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3 text-right">Ação</th>
+                <th className="py-3 px-3 text-right">Ação Admin</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-fute-border/40">
@@ -206,12 +232,22 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
                       {order.phone && <span className="block text-[10px] text-purple-400">{order.phone}</span>}
                     </div>
                   </td>
-                  <td className="py-3 px-3">{getStatusBadge(order.status)}</td>
+                  <td className="py-3 px-3">
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value as any)}
+                      className="bg-fute-darkBg border border-fute-border rounded px-2 py-1 text-[11px] font-bold text-white"
+                    >
+                      <option value="Pendente">Pendente</option>
+                      <option value="Confirmado">Confirmado</option>
+                      <option value="Em Confeccao">Em Produção</option>
+                    </select>
+                  </td>
                   <td className="py-3 px-3 text-right">
                     <button
                       onClick={() => handleDelete(order.id)}
                       className="p-1.5 text-purple-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                      title="Cancelar Pedido"
+                      title="Excluir Pedido"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

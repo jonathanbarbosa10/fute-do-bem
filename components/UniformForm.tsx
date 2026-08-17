@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { TeamId, UniformOrder } from '@/lib/types';
 import { TEAMS } from '@/lib/data';
 import { JerseyPreview } from './JerseyPreview';
-import { saveOrder } from '@/lib/storage';
+import { saveOrUpdateOrder, getMyPlayerOrder } from '@/lib/storage';
 import confetti from 'canvas-confetti';
-import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, Lock, ChevronDown } from 'lucide-react';
+import { Shirt, CheckCircle, Sparkles, User, Hash, Ruler, Phone, Lock, ChevronDown, Edit3, RefreshCw } from 'lucide-react';
 
 interface UniformFormProps {
   initialTeamId?: TeamId;
@@ -20,6 +20,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   const [teamId, setTeamId] = useState<TeamId>(initialTeamId);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   
+  const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [playerName, setPlayerName] = useState('');
   const [jerseyName, setJerseyName] = useState('');
   const [number, setNumber] = useState<number | string>(10);
@@ -28,14 +29,32 @@ export const UniformForm: React.FC<UniformFormProps> = ({
   const [phone, setPhone] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingOrder, setExistingOrder] = useState<UniformOrder | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [successOrder, setSuccessOrder] = useState<UniformOrder | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const team = TEAMS[teamId];
 
-  // When team changes, pre-select the first player in roster
+  // Load existing order on mount
   useEffect(() => {
-    if (team && team.players.length > 0) {
+    const saved = getMyPlayerOrder();
+    if (saved) {
+      setExistingOrder(saved);
+      setOrderId(saved.id);
+      setTeamId(saved.teamId);
+      setPlayerName(saved.playerName);
+      setJerseyName(saved.jerseyName);
+      setNumber(saved.number);
+      setSize(saved.size);
+      setPosition(saved.position);
+      setPhone(saved.phone || '');
+    }
+  }, []);
+
+  // When team changes, pre-select player if not editing existing order
+  useEffect(() => {
+    if (!isEditing && !existingOrder && team && team.players.length > 0) {
       const firstPlayer = team.players[0];
       setSelectedPlayerId(firstPlayer.id);
       setPlayerName(firstPlayer.name);
@@ -43,9 +62,8 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       setNumber(firstPlayer.number);
       setPosition(firstPlayer.position);
     }
-  }, [teamId]);
+  }, [teamId, isEditing, existingOrder]);
 
-  // When player selection changes from dropdown
   const handlePlayerSelect = (pId: string) => {
     setSelectedPlayerId(pId);
     const p = team.players.find((item) => item.id === pId);
@@ -77,8 +95,9 @@ export const UniformForm: React.FC<UniformFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      // 1. Save locally via storage helper
-      const newOrder = saveOrder({
+      // 1. Save or Update order
+      const newOrder = saveOrUpdateOrder({
+        id: orderId,
         teamId,
         playerName: playerName.trim(),
         jerseyName: jerseyName.trim().toUpperCase(),
@@ -88,7 +107,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
         phone: phone.trim(),
       });
 
-      // 2. Also POST to API route
+      // 2. Also POST/UPSERT to server API route
       await fetch('/api/uniforms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,6 +127,9 @@ export const UniformForm: React.FC<UniformFormProps> = ({
       }
 
       setSuccessOrder(newOrder);
+      setExistingOrder(newOrder);
+      setIsEditing(false);
+
       if (onOrderCreated) {
         onOrderCreated(newOrder);
       }
@@ -117,11 +139,6 @@ export const UniformForm: React.FC<UniformFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleReset = () => {
-    setSuccessOrder(null);
-    setErrorMsg('');
   };
 
   return (
@@ -137,60 +154,83 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               Portal do Jogador - Pedido de Kit
             </h2>
             <p className="text-xs text-fute-purpleLight">
-              Selecione seu nome da lista oficial do campeonato para confeccionar seu kit personalizado.
+              Selecione seu nome da lista oficial, personalize sua camiseta e edite quando precisar.
             </p>
           </div>
         </div>
 
-        {/* Success Confirmation Card */}
-        {successOrder ? (
-          <div className="p-6 bg-gradient-to-b from-purple-950/60 to-fute-card border border-fute-purpleBright rounded-2xl text-center space-y-4 animate-fadeIn">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400">
-              <CheckCircle className="w-10 h-10" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-white">Pedido Registrado com Sucesso!</h3>
-              <p className="text-xs text-purple-200 mt-1">
-                Seu kit para a seleção do{' '}
-                <strong className="text-fute-gold uppercase">{successOrder.teamId}</strong> foi salvo para produção.
-              </p>
+        {/* Existing Submitted Order View (If player has order and is not editing) */}
+        {existingOrder && !isEditing ? (
+          <div className="p-6 bg-gradient-to-b from-purple-950/60 to-fute-card border border-fute-purpleBright rounded-2xl space-y-5 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400">
+                  <CheckCircle className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Seu Kit de Uniforme está Validado!</h3>
+                  <span className="text-xs text-purple-200">
+                    Seleção: <strong className="text-fute-gold uppercase">{existingOrder.teamId}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-fute-purple/40 hover:bg-fute-purpleBright text-white text-xs font-bold rounded-xl border border-fute-purpleLight/40 transition-colors shadow-md"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Editar Meu Pedido</span>
+              </button>
             </div>
 
-            <div className="p-4 bg-fute-darkBg/80 rounded-xl border border-fute-border/60 text-left text-xs space-y-2">
-              <div className="flex justify-between border-b border-fute-border/40 pb-1">
-                <span className="text-fute-purpleLight">Jogador:</span>
-                <strong className="text-white">{successOrder.playerName}</strong>
+            {/* Summary Details */}
+            <div className="p-4 bg-fute-darkBg/90 rounded-xl border border-fute-border/70 text-xs space-y-2.5">
+              <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
+                <span className="text-fute-purpleLight">Jogador Convocado:</span>
+                <strong className="text-white">{existingOrder.playerName}</strong>
               </div>
-              <div className="flex justify-between border-b border-fute-border/40 pb-1">
-                <span className="text-fute-purpleLight">Nome na Camiseta:</span>
-                <strong className="text-white font-mono">{successOrder.jerseyName}</strong>
+              <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
+                <span className="text-fute-purpleLight">Nome Estampado na Camiseta:</span>
+                <strong className="text-fute-purpleBright font-mono text-sm">{existingOrder.jerseyName}</strong>
               </div>
-              <div className="flex justify-between border-b border-fute-border/40 pb-1">
-                <span className="text-fute-purpleLight">Número:</span>
-                <strong className="text-white font-mono">#{successOrder.number}</strong>
+              <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
+                <span className="text-fute-purpleLight">Número Desejado:</span>
+                <strong className="text-white font-mono text-sm">#{existingOrder.number}</strong>
               </div>
-              <div className="flex justify-between border-b border-fute-border/40 pb-1">
-                <span className="text-fute-purpleLight">Tamanho:</span>
-                <strong className="text-white">{successOrder.size}</strong>
+              <div className="flex justify-between border-b border-fute-border/40 pb-1.5">
+                <span className="text-fute-purpleLight">Tamanho Escolhido:</span>
+                <strong className="text-white px-2 py-0.5 bg-fute-border/50 rounded">{existingOrder.size}</strong>
               </div>
               <div className="flex justify-between">
                 <span className="text-fute-purpleLight">Posição (Fixa Society):</span>
-                <strong className="text-emerald-400 font-bold">{successOrder.position}</strong>
+                <strong className="text-emerald-400 font-bold">{existingOrder.position}</strong>
               </div>
             </div>
 
-            <button
-              onClick={handleReset}
-              className="w-full py-3 bg-fute-purple hover:bg-fute-purpleBright text-white font-bold text-sm rounded-xl shadow-lg transition-colors"
-            >
-              Realizar Novo Pedido de Uniforme
-            </button>
+            <p className="text-[11px] text-fute-purpleLight/80 italic text-center">
+              Deseja mudar o tamanho ou número da sua camisa? Clique no botão <strong>Editar Meu Pedido</strong> acima para atualizar e reenviar.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {errorMsg && (
               <div className="p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-xs text-red-200 font-semibold">
                 {errorMsg}
+              </div>
+            )}
+
+            {isEditing && (
+              <div className="p-3 bg-purple-900/40 border border-purple-500/40 rounded-xl text-xs text-purple-200 flex items-center justify-between">
+                <span>Modo de Edição de Pedido Existente</span>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="text-[11px] text-purple-300 underline"
+                >
+                  Cancelar Edição
+                </button>
               </div>
             )}
 
@@ -349,7 +389,7 @@ export const UniformForm: React.FC<UniformFormProps> = ({
               className="w-full py-4 bg-gradient-to-r from-fute-purple via-fute-purpleBright to-purple-500 hover:from-purple-600 hover:to-fute-purple text-white font-extrabold text-sm rounded-xl shadow-xl shadow-purple-950/60 uppercase tracking-wider flex items-center justify-center gap-2 transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4" />
-              <span>{isSubmitting ? 'SALVANDO SEU KIT...' : 'CONFIRMAR E SALVAR MEU KIT DE UNIFORME'}</span>
+              <span>{isSubmitting ? 'SALVANDO SEU KIT...' : isEditing ? 'REENVIAR E ATUALIZAR MEU PEDIDO' : 'CONFIRMAR E SALVAR MEU KIT DE UNIFORME'}</span>
             </button>
           </form>
         )}

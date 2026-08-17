@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
@@ -9,20 +9,34 @@ import {
   Users,
   Shirt,
   BarChart3,
-  Heart,
   Trophy,
   ChevronRight,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = () => {
+      setIsAdmin(localStorage.getItem('fute_admin_mode') === 'true');
+    };
+    checkAdmin();
+    window.addEventListener('storage', checkAdmin);
+    const interval = setInterval(checkAdmin, 1000);
+    return () => {
+      window.removeEventListener('storage', checkAdmin);
+      clearInterval(interval);
+    };
+  }, []);
 
   const navItems = [
     { label: 'Página Inicial', href: '/', icon: Home },
     { label: 'Times & Escalações', href: '/times', icon: Users },
     { label: 'Informações de Uniforme', href: '/uniforme', icon: Shirt, highlight: true },
     { label: 'Estatísticas', href: '/estatisticas', icon: BarChart3 },
-    { label: 'Doações', href: '/doacoes', icon: Heart },
   ];
 
   return (
@@ -33,14 +47,22 @@ export const Sidebar: React.FC = () => {
           <Logo size="md" />
         </Link>
 
-        {/* Tournament Badge */}
-        <div className="mx-2 p-3 rounded-xl bg-gradient-to-r from-purple-900/40 to-fute-card border border-fute-purpleBright/30 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-fute-purple/20 text-fute-purpleLight">
-            <Trophy className="w-5 h-5 text-fute-gold" />
+        {/* Access Mode Pill */}
+        <div className={`mx-2 p-3 rounded-xl border flex items-center gap-3 transition-colors ${
+          isAdmin
+            ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+            : 'bg-gradient-to-r from-purple-900/40 to-fute-card border-fute-purpleBright/30'
+        }`}>
+          <div className={`p-2 rounded-lg ${isAdmin ? 'bg-amber-500/20 text-amber-300' : 'bg-fute-purple/20 text-fute-purpleLight'}`}>
+            {isAdmin ? <ShieldCheck className="w-5 h-5 text-amber-400" /> : <User className="w-5 h-5 text-fute-purpleBright" />}
           </div>
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Edição Beneficente</h4>
-            <span className="text-[10px] text-fute-purpleLight font-medium">4 Seleções Globais</span>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+              {isAdmin ? 'Acesso ADMIN' : 'Acesso JOGADOR'}
+            </h4>
+            <span className="text-[10px] text-fute-purpleLight font-medium">
+              {isAdmin ? 'Modo Organizador Ativo' : 'Portal do Atleta'}
+            </span>
           </div>
         </div>
 
