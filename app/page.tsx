@@ -52,9 +52,9 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Replacement: Official Event Logo Shield Emblem */}
-          <div className="flex items-center justify-center p-6 sm:p-8 bg-fute-darkBg/60 border border-fute-purpleBright/40 rounded-3xl shadow-2xl hover:border-fute-gold/60 transition-all duration-300 transform hover:scale-105 shrink-0">
-            <Logo size="xl" showText={true} />
+          {/* Replacement: Official User Uploaded Shield Emblem */}
+          <div className="flex items-center justify-center p-4 sm:p-6 bg-fute-darkBg/60 border border-fute-purpleBright/40 rounded-3xl shadow-2xl hover:border-fute-gold/60 transition-all duration-300 transform hover:scale-105 shrink-0">
+            <Logo size="xl" showText={false} />
           </div>
         </div>
       </div>
