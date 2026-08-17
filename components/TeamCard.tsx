@@ -62,7 +62,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
         <div className="flex items-center gap-3 bg-fute-darkBg/80 p-3 rounded-xl border border-fute-border/50 mb-4">
           <img
             src={kitImage}
-            alt={`Uniforme Kçula ${team.name}`}
+            alt={`Uniforme ${team.name}`}
             className="w-16 h-16 object-contain rounded-lg shrink-0 border border-fute-border/40 bg-black/40 p-1"
           />
           <p className="text-xs text-purple-200/80 leading-snug">

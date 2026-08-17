@@ -9,7 +9,6 @@ import {
   Users,
   Shirt,
   BarChart3,
-  Trophy,
   ChevronRight,
   ShieldCheck,
   User,
@@ -118,8 +117,7 @@ export const Sidebar: React.FC = () => {
           </nav>
 
           <div className="pt-4 border-t border-fute-border/40 text-center">
-            <p className="text-xs text-fute-purpleLight/70">Fute do Bem © 2024</p>
-            <span className="text-[10px] text-purple-400/60">Uniformes por Kçula Sports</span>
+            <p className="text-xs text-fute-purpleLight/70">Fute do Bem © 2026</p>
           </div>
         </div>
       )}
@@ -190,11 +188,8 @@ export const Sidebar: React.FC = () => {
         {/* Footer Info */}
         <div className="px-3 py-3 border-t border-fute-border/40 text-center">
           <p className="text-[11px] text-fute-purpleLight/60">
-            Fute do Bem © 2024
+            Fute do Bem © 2026
           </p>
-          <span className="text-[10px] text-purple-400/50 block mt-0.5">
-            Uniformes por Kçula Sports
-          </span>
         </div>
       </aside>
     </>
