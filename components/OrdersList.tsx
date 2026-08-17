@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { UniformOrder } from '@/lib/types';
-import { getStoredOrders, deleteOrder, updateOrderStatus } from '@/lib/storage';
-import { Shirt, Search, Download, Trash2, CheckCircle2, Clock, Factory, Lock, ShieldCheck, RefreshCw, FileSpreadsheet } from 'lucide-react';
+import { getStoredOrders, deleteOrder } from '@/lib/storage';
+import { Shirt, Search, Trash2, Lock, ShieldCheck, RefreshCw, FileSpreadsheet } from 'lucide-react';
 
 interface OrdersListProps {
   refreshTrigger?: number;
@@ -13,7 +13,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
   const [orders, setOrders] = useState<UniformOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,27 +62,20 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
     }
   };
 
-  const handleStatusChange = async (id: string, status: UniformOrder['status']) => {
-    if (!isAdmin) return;
-    updateOrderStatus(id, status);
-    fetchOrdersFromDatabase();
-  };
-
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
       o.playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.jerseyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.number.toString().includes(searchTerm);
     const matchesTeam = selectedTeam === 'all' || o.teamId === selectedTeam;
-    const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
-    return matchesSearch && matchesTeam && matchesStatus;
+    return matchesSearch && matchesTeam;
   });
 
   // Export directly as a Native Excel/Google Sheets Formatted Spreadsheet (.xls)
   const exportToNativeSpreadsheet = () => {
     if (!isAdmin) return;
     
-    const headers = ['ID Pedido', 'Seleção', 'Nome Completo Jogador', 'Nome na Camiseta', 'Número', 'Tamanho', 'Posição', 'WhatsApp / Contato', 'Status', 'Data de Cadastro'];
+    const headers = ['ID Pedido', 'Seleção', 'Nome Completo Jogador', 'Nome na Camiseta', 'Número', 'Tamanho', 'Posição', 'WhatsApp / Contato', 'Data de Cadastro'];
     
     const tableHtml = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -126,7 +118,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
                 <td>${o.size}</td>
                 <td>${o.position}</td>
                 <td>${o.phone || ''}</td>
-                <td>${o.status}</td>
                 <td>${o.createdAt}</td>
               </tr>
             `).join('')}
@@ -144,29 +135,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const getStatusBadge = (status: UniformOrder['status']) => {
-    switch (status) {
-      case 'Confirmado':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="w-3 h-3" /> Confirmado
-          </span>
-        );
-      case 'Em Confeccao':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-            <Factory className="w-3 h-3" /> Em Produção
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            <Clock className="w-3 h-3" /> Pendente
-          </span>
-        );
-    }
   };
 
   const teamEmojis: Record<string, string> = {
@@ -233,7 +201,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
       </div>
 
       {/* Filters Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="relative">
           <Search className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -256,17 +224,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
           <option value="franca">🇫🇷 França</option>
           <option value="alemanha">🇩🇪 Alemanha</option>
         </select>
-
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 bg-fute-darkBg border border-fute-border rounded-xl text-xs text-purple-200 focus:outline-none focus:border-fute-purpleBright"
-        >
-          <option value="all">Todos os Status</option>
-          <option value="Pendente">Pendente</option>
-          <option value="Confirmado">Confirmado</option>
-          <option value="Em Confeccao">Em Produção</option>
-        </select>
       </div>
 
       {/* Table / Grid of Orders */}
@@ -284,7 +241,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
                 <th className="py-3 px-3">Nº</th>
                 <th className="py-3 px-3">Tamanho</th>
                 <th className="py-3 px-3">Jogador</th>
-                <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-3 text-right">Ação Admin</th>
               </tr>
             </thead>
@@ -310,17 +266,6 @@ export const OrdersList: React.FC<OrdersListProps> = ({ refreshTrigger = 0 }) =>
                       <span className="font-semibold text-white">{order.playerName}</span>
                       {order.phone && <span className="block text-[10px] text-purple-400">{order.phone}</span>}
                     </div>
-                  </td>
-                  <td className="py-3 px-3">
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as any)}
-                      className="bg-fute-darkBg border border-fute-border rounded px-2 py-1 text-[11px] font-bold text-white"
-                    >
-                      <option value="Pendente">Pendente</option>
-                      <option value="Confirmado">Confirmado</option>
-                      <option value="Em Confeccao">Em Produção</option>
-                    </select>
                   </td>
                   <td className="py-3 px-3 text-right">
                     <button
